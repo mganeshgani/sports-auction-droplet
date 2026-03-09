@@ -67,22 +67,30 @@ exports.getAllAuctioneers = async (req, res) => {
       .select('-password')
       .sort({ createdAt: -1 });
 
-    // Get stats for each auctioneer
-    const auctioneersWithStats = await Promise.all(
-      auctioneers.map(async (auctioneer) => {
-        const playerCount = await Player.countDocuments({ auctioneer: auctioneer._id });
-        const teamCount = await Team.countDocuments({ auctioneer: auctioneer._id });
-        
-        return {
-          ...auctioneer.toObject(),
-          usage: {
-            totalPlayers: playerCount,
-            totalTeams: teamCount,
-            totalAuctions: 0
-          }
-        };
-      })
-    );
+    // Single aggregation for all auctioneers (O(1) instead of O(N))
+    const auctioneerIds = auctioneers.map(a => a._id);
+    const [playerCounts, teamCounts] = await Promise.all([
+      Player.aggregate([
+        { $match: { auctioneer: { $in: auctioneerIds } } },
+        { $group: { _id: '$auctioneer', count: { $sum: 1 } } }
+      ]),
+      Team.aggregate([
+        { $match: { auctioneer: { $in: auctioneerIds } } },
+        { $group: { _id: '$auctioneer', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const playerCountMap = Object.fromEntries(playerCounts.map(p => [p._id.toString(), p.count]));
+    const teamCountMap = Object.fromEntries(teamCounts.map(t => [t._id.toString(), t.count]));
+
+    const auctioneersWithStats = auctioneers.map(a => ({
+      ...a.toObject(),
+      usage: {
+        totalPlayers: playerCountMap[a._id.toString()] || 0,
+        totalTeams: teamCountMap[a._id.toString()] || 0,
+        totalAuctions: 0
+      }
+    }));
 
     res.json({
       success: true,
@@ -292,9 +300,14 @@ exports.deleteAuctioneer = async (req, res) => {
       });
     }
 
-    // Delete all associated data
-    await Player.deleteMany({ auctioneer: auctioneer._id });
-    await Team.deleteMany({ auctioneer: auctioneer._id });
+    // Delete all associated data (including FormConfig and AppConfig)
+    const AppConfig = require('../models/appConfig.model');
+    await Promise.all([
+      Player.deleteMany({ auctioneer: auctioneer._id }),
+      Team.deleteMany({ auctioneer: auctioneer._id }),
+      FormConfig.deleteMany({ auctioneer: auctioneer._id }),
+      AppConfig.deleteOne({ auctioneer: auctioneer._id }),
+    ]);
     await User.findByIdAndDelete(auctioneer._id);
 
     res.json({
@@ -339,10 +352,10 @@ exports.resetAuctioneerData = async (req, res) => {
     // 3. Delete all player photos from Cloudinary
     let playerPhotosDeleted = 0;
     for (const player of players) {
-      if (player.photo && player.photo.includes('cloudinary.com')) {
+      if (player.photoUrl && player.photoUrl.includes('cloudinary.com')) {
         try {
           // Extract public_id from Cloudinary URL
-          const urlParts = player.photo.split('/');
+          const urlParts = player.photoUrl.split('/');
           const fileWithExt = urlParts[urlParts.length - 1];
           const publicId = `auction-players/${fileWithExt.split('.')[0]}`;
           
@@ -358,10 +371,10 @@ exports.resetAuctioneerData = async (req, res) => {
     // 4. Delete all team logos from Cloudinary
     let teamLogosDeleted = 0;
     for (const team of teams) {
-      if (team.logo && team.logo.includes('cloudinary.com')) {
+      if (team.logoUrl && team.logoUrl.includes('cloudinary.com')) {
         try {
           // Extract public_id from Cloudinary URL
-          const urlParts = team.logo.split('/');
+          const urlParts = team.logoUrl.split('/');
           const fileWithExt = urlParts[urlParts.length - 1];
           const publicId = `auction-teams/${fileWithExt.split('.')[0]}`;
           
@@ -388,7 +401,6 @@ exports.resetAuctioneerData = async (req, res) => {
 
     // 6. Reset auctioneer's registration token (force new link generation)
     auctioneer.registrationToken = undefined;
-    auctioneer.registrationTokenExpiry = undefined;
     await auctioneer.save();
 
     // 7. Emit socket event for real-time updates

@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Team } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { teamService, clearCache } from '../services/api';
+import { formatCurrency } from '../utils/formatters';
+import ConfirmModal from '../components/ConfirmModal';
 
 const TeamsPage: React.FC = () => {
   const { isAuctioneer, user } = useAuth();
@@ -13,6 +15,7 @@ const TeamsPage: React.FC = () => {
   const [resetting, setResetting] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [formData, setFormData] = useState({
@@ -71,8 +74,6 @@ const TeamsPage: React.FC = () => {
   }, [formData, logoFile, editingTeam, fetchTeams, API_URL]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this team?')) return;
-    
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/teams/${id}`, {
@@ -139,11 +140,6 @@ const TeamsPage: React.FC = () => {
     }
   };
 
-  const getBudgetPercentage = useCallback((team: Team) => {
-    const total = team.budget || 0;
-    return total > 0 ? (team.remainingBudget / total) * 100 : 0;
-  }, []);
-
   // Statistics calculations
   const totalTeams = teams.length;
   const totalPlayers = useMemo(() => teams.reduce((sum, t) => sum + (t.filledSlots || 0), 0), [teams]);
@@ -195,7 +191,7 @@ const TeamsPage: React.FC = () => {
                 }}>
                   <div>
                     <p className="text-[8px] sm:text-[9px] text-gray-400 uppercase tracking-wider">Budget</p>
-                    <p className="text-xs sm:text-sm font-black leading-none" style={{ color: '#D4AF37' }}>₹{(teams.reduce((sum, t) => sum + (t.budget || 0), 0) / 1000).toFixed(0)}K</p>
+                    <p className="text-xs sm:text-sm font-black leading-none" style={{ color: '#D4AF37' }}>{formatCurrency(teams.reduce((sum, t) => sum + (t.budget || 0), 0))}</p>
                   </div>
                 </div>
                 <div className="backdrop-blur-sm rounded-lg px-1.5 sm:px-2 py-1 flex-shrink-0" style={{
@@ -297,192 +293,157 @@ const TeamsPage: React.FC = () => {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {teams.map((team) => {
-              const budgetPercentage = getBudgetPercentage(team);
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[...teams].sort((a, b) => (b.filledSlots || 0) - (a.filledSlots || 0)).map((team) => {
               const spent = (team.budget || 0) - (team.remainingBudget || 0);
+              const budgetPercent = (team.budget || 0) > 0 ? Math.min((spent / team.budget!) * 100, 100) : 0;
+              const remaining = team.remainingBudget || 0;
               
               return (
                 <div
                   key={team._id}
-                  className="group relative"
+                  className="group relative h-full"
                 >
-                  {/* Ultra Premium Luxury Card */}
-                  <div className="relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02]"
+                  {/* Luxury Card Container */}
+                  <div className="relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02] h-full flex flex-col"
                     style={{
-                      background: 'linear-gradient(165deg, #0a0a0a 0%, #141414 40%, #0d0d0d 100%)',
-                      border: '1px solid rgba(212, 175, 55, 0.12)',
-                      boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.04)'
+                      background: 'linear-gradient(145deg, #0c0c0c 0%, #1a1a1a 50%, #0f0f0f 100%)',
+                      border: '1px solid rgba(212, 175, 55, 0.15)',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.05)'
                     }}
                   >
-                    {/* Ambient Glow Effect */}
-                    <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full opacity-0 group-hover:opacity-30 blur-3xl transition-all duration-700"
-                      style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.5) 0%, transparent 70%)' }}
+                    {/* Subtle Ambient Glow */}
+                    <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-20 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
+                      style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%)' }}
                     />
-                    
+
                     {/* Top Accent Line */}
-                    <div className="absolute top-0 left-0 right-0 h-[1px]"
-                      style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.4) 50%, transparent 100%)' }}
+                    <div className="absolute top-0 left-0 right-0 h-[2px]"
+                      style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.6) 50%, transparent 100%)' }}
                     />
 
-                    {/* Header */}
-                    <div className="relative p-5 pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          {/* Team Logo */}
-                          <div className="relative">
-                            <div className="w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105"
-                              style={{
-                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.04) 100%)',
-                                border: '1px solid rgba(212, 175, 55, 0.2)',
-                                boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)'
-                              }}
-                            >
-                              {team.logoUrl ? (
-                                <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-2xl font-extralight" style={{ color: '#D4AF37' }}>
-                                  {team.name.charAt(0)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Team Name */}
-                          <div>
-                            <h3 className="text-xl font-semibold tracking-tight text-white group-hover:text-amber-50 transition-colors">
-                              {team.name}
-                            </h3>
-                            <p className="text-[11px] text-gray-500 mt-0.5 font-medium tracking-wide">
-                              {team.filledSlots || 0} of {team.totalSlots} players
-                            </p>
-                          </div>
+                    {/* Header Section */}
+                    <div className="relative p-4 pb-3">
+                      <div className="flex items-center gap-3">
+                        {/* Team Logo/Initial */}
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%)',
+                            border: '1px solid rgba(212, 175, 55, 0.25)',
+                            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+                          }}
+                        >
+                          {team.logoUrl ? (
+                            <img src={team.logoUrl} alt={team.name} loading="lazy" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xl font-light tracking-tight" style={{ color: '#D4AF37' }}>
+                              {team.name.charAt(0)}
+                            </span>
+                          )}
                         </div>
 
-                        {/* Action Buttons */}
-                        {isAuctioneer && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditModal(team)}
-                              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-                              style={{
-                                background: 'rgba(59, 130, 246, 0.1)',
-                                border: '1px solid rgba(59, 130, 246, 0.2)'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
-                                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
-                              }}
-                              title="Edit Team"
-                            >
-                              <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleDelete(team._id)}
-                              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-                              style={{
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                border: '1px solid rgba(239, 68, 68, 0.2)'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
-                              }}
-                              title="Delete Team"
-                            >
-                              <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                        {/* Team Name & Player Count */}
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-lg font-semibold tracking-tight truncate text-white group-hover:text-amber-100 transition-colors">
+                            {team.name}
+                          </h2>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] text-gray-500 font-medium">
+                              {team.filledSlots || 0}/{team.totalSlots} Players
+                            </span>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Subtle Divider */}
-                    <div className="mx-5 h-[1px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)' }} />
+                    {/* Divider */}
+                    <div className="mx-4 h-[1px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' }} />
 
                     {/* Stats Section */}
-                    <div className="p-5 pt-4">
-                      {/* Budget Display - Large Numbers */}
-                      <div className="flex items-end justify-between mb-4">
+                    <div className="p-4 pt-3 flex-1 flex flex-col">
+                      {/* Budget Display */}
+                      <div className="flex items-baseline justify-between mb-3">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">Total Budget</p>
-                          <p className="text-3xl font-light tracking-tight" style={{ color: '#D4AF37' }}>
-                            ₹{(team.budget || 0) >= 100000 ? `${((team.budget || 0) / 100000).toFixed(1)}L` : `${((team.budget || 0) / 1000).toFixed(0)}K`}
+                          <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-0.5">Spent</p>
+                          <p className="text-2xl font-light tracking-tight" style={{ color: '#D4AF37' }}>
+                            {formatCurrency(spent)}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">Remaining</p>
-                          <p className={`text-xl font-medium ${(team.remainingBudget || 0) < (team.budget || 0) * 0.2 ? 'text-red-400' : 'text-emerald-400'}`}>
-                            ₹{(team.remainingBudget || 0) >= 100000 ? `${((team.remainingBudget || 0) / 100000).toFixed(1)}L` : `${((team.remainingBudget || 0) / 1000).toFixed(0)}K`}
+                          <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-0.5">Remaining</p>
+                          <p className={`text-lg font-medium ${(team.budget || 0) === 0 ? 'text-gray-500' : remaining < (team.budget || 0) * 0.2 ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {(team.budget || 0) > 0 ? formatCurrency(remaining) : '∞'}
                           </p>
                         </div>
                       </div>
 
                       {/* Elegant Progress Bar */}
-                      <div className="mb-5">
-                        <div className="relative h-1.5 rounded-full overflow-hidden"
-                          style={{ background: 'rgba(255,255,255,0.04)' }}
-                        >
-                          <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-                            style={{
-                              width: `${100 - budgetPercentage}%`,
-                              background: (100 - budgetPercentage) > 80 
-                                ? 'linear-gradient(90deg, #ef4444, #dc2626)' 
-                                : (100 - budgetPercentage) > 50 
-                                ? 'linear-gradient(90deg, #D4AF37, #F0D770)' 
-                                : 'linear-gradient(90deg, #10b981, #34d399)',
-                              boxShadow: `0 0 12px ${(100 - budgetPercentage) > 80 ? 'rgba(239,68,68,0.4)' : (100 - budgetPercentage) > 50 ? 'rgba(212,175,55,0.4)' : 'rgba(16,185,129,0.4)'}`
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between mt-2">
-                          <span className="text-[10px] text-gray-600">{(100 - budgetPercentage).toFixed(0)}% used</span>
-                          <span className="text-[10px] text-gray-600">{budgetPercentage.toFixed(0)}% left</span>
-                        </div>
+                      <div className="relative h-1 rounded-full overflow-hidden mb-4"
+                        style={{ background: 'rgba(255,255,255,0.05)' }}
+                      >
+                        <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+                          style={{
+                            width: `${budgetPercent}%`,
+                            background: budgetPercent > 80
+                              ? 'linear-gradient(90deg, #ef4444, #dc2626)'
+                              : budgetPercent > 50
+                              ? 'linear-gradient(90deg, #D4AF37, #F0D770)'
+                              : 'linear-gradient(90deg, #10b981, #34d399)',
+                            boxShadow: `0 0 10px ${budgetPercent > 80 ? 'rgba(239,68,68,0.5)' : budgetPercent > 50 ? 'rgba(212,175,55,0.5)' : 'rgba(16,185,129,0.5)'}`
+                          }}
+                        />
                       </div>
 
-                      {/* Minimal Stats Row */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-xl p-3 text-center transition-all duration-300"
-                          style={{
-                            background: 'rgba(16, 185, 129, 0.06)',
-                            border: '1px solid rgba(16, 185, 129, 0.1)'
-                          }}
-                        >
-                          <p className="text-[9px] uppercase tracking-[0.15em] text-gray-500 mb-1">Spent</p>
-                          <p className="text-lg font-medium text-emerald-400">
-                            ₹{spent >= 100000 ? `${(spent / 100000).toFixed(1)}L` : `${(spent / 1000).toFixed(0)}K`}
+                      {/* Player Count */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center">
+                          <p className="text-3xl font-light tracking-tight" style={{ color: (team.filledSlots || 0) > 0 ? '#D4AF37' : 'rgba(255,255,255,0.15)' }}>
+                            {team.filledSlots || 0}
                           </p>
-                        </div>
-                        <div className="rounded-xl p-3 text-center transition-all duration-300"
-                          style={{
-                            background: 'rgba(59, 130, 246, 0.06)',
-                            border: '1px solid rgba(59, 130, 246, 0.1)'
-                          }}
-                        >
-                          <p className="text-[9px] uppercase tracking-[0.15em] text-gray-500 mb-1">Open Slots</p>
-                          <p className="text-lg font-medium text-blue-400">
-                            {team.totalSlots - (team.filledSlots || 0)}
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mt-1">
+                            {(team.filledSlots || 0) === 1 ? 'Player' : 'Players'}
                           </p>
                         </div>
                       </div>
                     </div>
 
+                    {/* Auctioneer Quick Actions */}
+                    {isAuctioneer && (
+                      <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                        <button
+                          onClick={() => openEditModal(team)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+                          style={{
+                            background: 'rgba(59, 130, 246, 0.15)',
+                            border: '1px solid rgba(59, 130, 246, 0.25)',
+                            backdropFilter: 'blur(8px)'
+                          }}
+                          title="Edit"
+                        >
+                          <svg className="w-3 h-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(team._id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            backdropFilter: 'blur(8px)'
+                          }}
+                          title="Delete"
+                        >
+                          <svg className="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+
                     {/* Bottom Accent */}
                     <div className="absolute bottom-0 left-0 right-0 h-[1px]"
-                      style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.15) 50%, transparent 100%)' }}
+                      style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.2) 50%, transparent 100%)' }}
                     />
                   </div>
                 </div>
@@ -493,188 +454,173 @@ const TeamsPage: React.FC = () => {
       )}
 
       {showAddModal && (
-        <>
-          {/* Backdrop */}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.9)', backdropFilter: 'blur(12px)' }}
+          onClick={resetForm}
+        >
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 animate-fadeIn"
-            onClick={resetForm}
-          ></div>
+            className="relative w-full max-w-md overflow-hidden rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(165deg, #0a0a0a 0%, #141414 40%, #0d0d0d 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+              boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.95), 0 0 80px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)',
+              maxHeight: 'calc(100vh - 2rem)'
+            }}
+          >
+            {/* Top Accent Line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.6) 50%, transparent 100%)' }}
+            />
 
-          {/* Modal */}
-          <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-            <div
-              className="relative w-full max-w-lg my-8 rounded-2xl shadow-2xl pointer-events-auto animate-slideUp"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(13, 17, 23, 0.95) 50%, rgba(0, 0, 0, 0.95) 100%)',
-                border: '2px solid rgba(212, 175, 55, 0.3)',
-                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.9), 0 0 80px rgba(212, 175, 55, 0.2)',
-                maxHeight: 'calc(100vh - 4rem)'
-              }}
-            >
-              {/* Modal Header */}
-              <div className="relative border-b p-6 flex-shrink-0" style={{
-                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(0, 0, 0, 0.5) 100%)',
-                borderBottom: '1px solid rgba(212, 175, 55, 0.3)'
-              }}>
-                <button
-                  onClick={resetForm}
-                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90 group"
-                  style={{
-                    background: 'rgba(0, 0, 0, 0.8)',
-                    border: '1px solid rgba(212, 175, 55, 0.3)'
-                  }}
-                >
-                  <svg className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-
+            {/* Header */}
+            <div className="relative px-6 py-5" style={{
+              background: 'linear-gradient(180deg, rgba(212, 175, 55, 0.06) 0%, transparent 100%)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.04)'
+            }}>
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #F0D770 50%, #D4AF37 100%)',
-                    border: '2px solid rgba(212, 175, 55, 0.5)',
-                    boxShadow: '0 0 20px rgba(212, 175, 55, 0.4), inset 0 2px 8px rgba(255, 255, 255, 0.3)'
-                  }}>
-                    <span className="text-3xl">{editingTeam ? '✏️' : '➕'}</span>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%)',
+                      border: '1px solid rgba(212, 175, 55, 0.25)'
+                    }}
+                  >
+                    <span className="text-lg">{editingTeam ? '✏️' : '🏆'}</span>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-white">{editingTeam ? 'Edit Team' : 'Add New Team'}</h2>
-                    <p className="text-sm text-gray-400">{editingTeam ? 'Update team information' : 'Create a new auction team'}</p>
+                    <h2 className="text-lg font-semibold tracking-tight text-white">
+                      {editingTeam ? 'Edit Team' : 'New Team'}
+                    </h2>
+                    <p className="text-[11px] text-gray-500 font-medium">
+                      {editingTeam ? 'Update team details' : 'Create a new auction team'}
+                    </p>
                   </div>
                 </div>
+                <button
+                  onClick={resetForm}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)'
+                  }}
+                >
+                  <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
+            </div>
 
-              {/* Modal Body - Scrollable */}
-              <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 16rem)' }}>
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                {/* Team Logo Upload */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
-                    Team Logo
-                  </label>
-                  <div className="flex items-center gap-4">
-                    {/* Logo Preview */}
-                    <div className="w-20 h-20 rounded-xl overflow-hidden flex items-center justify-center" style={{
-                      background: 'rgba(212, 175, 55, 0.1)',
-                      border: '2px solid rgba(212, 175, 55, 0.3)'
-                    }}>
-                      {logoPreview || (editingTeam?.logoUrl) ? (
-                        <img 
-                          src={logoPreview || editingTeam?.logoUrl} 
-                          alt="Team logo" 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <svg className="w-10 h-10 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </div>
-                    {/* File Input */}
-                    <div className="flex-1">
+            {/* Body */}
+            <div className="overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 10rem)' }}>
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                {/* Logo Upload */}
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:scale-105"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.03) 100%)',
+                      border: '1.5px solid rgba(212, 175, 55, 0.2)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                    }}
+                  >
+                    {logoPreview || (editingTeam?.logoUrl) ? (
+                      <img src={logoPreview || editingTeam?.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-7 h-7" style={{ color: 'rgba(212, 175, 55, 0.4)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1.5">Team Logo</label>
+                    <label className="block cursor-pointer">
+                      <div className="px-3 py-2 rounded-lg text-xs font-medium text-center transition-all duration-200 hover:scale-[1.02]"
+                        style={{
+                          background: 'rgba(212, 175, 55, 0.08)',
+                          border: '1px dashed rgba(212, 175, 55, 0.25)',
+                          color: '#D4AF37'
+                        }}
+                      >
+                        {logoFile ? logoFile.name : 'Choose file...'}
+                      </div>
                       <input
                         type="file"
                         accept="image/*,.heic,.heif,.svg"
+                        className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             setLogoFile(file);
                             const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setLogoPreview(reader.result as string);
-                            };
+                            reader.onloadend = () => setLogoPreview(reader.result as string);
                             reader.readAsDataURL(file);
                           }
                         }}
-                        className="w-full px-4 py-3 bg-gray-800/80 border rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-amber-500 file:to-amber-600 file:text-white hover:file:from-amber-600 hover:file:to-amber-700 file:cursor-pointer transition-all duration-300"
-                        style={{
-                          borderColor: 'rgba(212, 175, 55, 0.3)'
-                        }}
                       />
-                      <p className="text-xs text-gray-500 mt-1">Optional: Upload team logo (All image formats supported: JPG, PNG, GIF, WebP, SVG, etc.)</p>
-                    </div>
+                    </label>
+                    <p className="text-[9px] text-gray-600 mt-1">Optional · JPG, PNG, SVG, WebP</p>
                   </div>
                 </div>
 
-                {/* Team Name Input */}
+                {/* Team Name */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">
-                    Team Name
-                  </label>
+                  <label className="block text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1.5">Team Name</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter team name..."
-                    className="w-full px-4 py-3 bg-gray-800/80 border rounded-xl text-white placeholder-gray-500 transition-all duration-300 outline-none"
+                    className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-all duration-300"
                     style={{
-                      borderColor: 'rgba(212, 175, 55, 0.3)'
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#D4AF37'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(212, 175, 55, 0.3)'}
+                    onFocus={(e) => { e.target.style.borderColor = 'rgba(212, 175, 55, 0.4)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(212, 175, 55, 0.08)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
                   />
                 </div>
 
-                {/* Grid for Slots and Budget */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Total Slots Input */}
+                {/* Slots & Budget Grid */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-bold text-gray-300 mb-2">
-                      Total Slots
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1.5">Total Slots</label>
                     <input
                       type="number"
                       required
                       min="1"
                       value={formData.totalSlots}
                       onChange={(e) => setFormData({ ...formData, totalSlots: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 bg-gray-800/80 border rounded-xl text-white transition-all duration-300 outline-none"
+                      className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all duration-300"
                       style={{
-                        borderColor: 'rgba(212, 175, 55, 0.3)'
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
                       }}
-                      onFocus={(e) => e.target.style.borderColor = '#D4AF37'}
-                      onBlur={(e) => e.target.style.borderColor = 'rgba(212, 175, 55, 0.3)'}
+                      onFocus={(e) => { e.target.style.borderColor = 'rgba(212, 175, 55, 0.4)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(212, 175, 55, 0.08)'; }}
+                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
                     />
                   </div>
-
-                  {/* Budget Input */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-300 mb-2">
-                      Budget (₹)
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1.5">Budget (₹)</label>
                     <input
                       type="number"
                       required
                       min="0"
                       value={formData.budget}
                       onChange={(e) => setFormData({ ...formData, budget: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 bg-gray-800/80 border rounded-xl text-white transition-all duration-300 outline-none"
+                      className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all duration-300"
                       style={{
-                        borderColor: 'rgba(212, 175, 55, 0.3)'
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
                       }}
-                      onFocus={(e) => e.target.style.borderColor = '#D4AF37'}
-                      onBlur={(e) => e.target.style.borderColor = 'rgba(212, 175, 55, 0.3)'}
+                      onFocus={(e) => { e.target.style.borderColor = 'rgba(212, 175, 55, 0.4)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(212, 175, 55, 0.08)'; }}
+                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
                     />
-                  </div>
-                </div>
-
-                {/* Info Box */}
-                <div className="rounded-xl p-4" style={{
-                  background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%)',
-                  border: '1px solid rgba(212, 175, 55, 0.3)'
-                }}>
-                  <div className="flex gap-3">
-                    <span className="text-2xl flex-shrink-0">💡</span>
-                    <div className="text-sm text-gray-300">
-                      <p className="font-semibold mb-1">Quick Tips:</p>
-                      <ul className="space-y-1 text-xs text-gray-400">
-                        <li>• Choose a unique team name</li>
-                        <li>• Typical slots: 11-15 players</li>
-                        <li>• Set budget based on auction rules</li>
-                      </ul>
-                    </div>
                   </div>
                 </div>
 
@@ -684,11 +630,11 @@ const TeamsPage: React.FC = () => {
                     type="button"
                     onClick={resetForm}
                     disabled={submitting}
-                    className="flex-1 px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-[1.02] disabled:opacity-50"
                     style={{
-                      background: 'rgba(107, 114, 128, 0.3)',
-                      border: '2px solid rgba(107, 114, 128, 0.5)',
-                      color: '#D1D5DB'
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: '#9ca3af'
                     }}
                   >
                     Cancel
@@ -696,70 +642,36 @@ const TeamsPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
                     style={{
-                      background: submitting ? 'rgba(212, 175, 55, 0.5)' : 'linear-gradient(135deg, #D4AF37 0%, #F0D770 50%, #D4AF37 100%)',
-                      border: '2px solid rgba(212, 175, 55, 0.5)',
-                      boxShadow: submitting ? 'none' : '0 4px 20px rgba(212, 175, 55, 0.4)',
-                      color: '#000000'
+                      background: submitting ? 'rgba(212, 175, 55, 0.3)' : 'linear-gradient(135deg, #D4AF37 0%, #F0D770 50%, #D4AF37 100%)',
+                      border: '1px solid rgba(212, 175, 55, 0.4)',
+                      boxShadow: submitting ? 'none' : '0 4px 20px rgba(212, 175, 55, 0.3)',
+                      color: '#000'
                     }}
                   >
                     {submitting ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        {logoFile ? 'Uploading Logo...' : 'Saving...'}
+                        {logoFile ? 'Uploading...' : 'Saving...'}
                       </span>
                     ) : (
-                      editingTeam ? '💾 Save Changes' : '➕ Create Team'
+                      editingTeam ? 'Save Changes' : 'Create Team'
                     )}
                   </button>
                 </div>
               </form>
-              </div>
             </div>
-          </div>
 
-          {/* Animations */}
-          <style>{`
-            @keyframes fadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-            @keyframes slideUp {
-              from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-              }
-            }
-            .animate-fadeIn {
-              animation: fadeIn 0.2s ease-out;
-            }
-            .animate-slideUp {
-              animation: slideUp 0.3s ease-out;
-            }
-            .custom-scrollbar::-webkit-scrollbar {
-              width: 6px;
-            }
-            .custom-scrollbar::-webkit-scrollbar-track {
-              background: rgba(31, 41, 55, 0.5);
-              border-radius: 10px;
-            }
-            .custom-scrollbar::-webkit-scrollbar-thumb {
-              background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
-              border-radius: 10px;
-            }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-              background: linear-gradient(to bottom, #2563eb, #7c3aed);
-            }
-          `}</style>
-        </>
+            {/* Bottom Accent */}
+            <div className="absolute bottom-0 left-0 right-0 h-[1px]"
+              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.2) 50%, transparent 100%)' }}
+            />
+          </div>
+        </div>
       )}
 
       {/* Reset Confirmation Modal */}
@@ -826,6 +738,18 @@ const TeamsPage: React.FC = () => {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        title="Delete Team?"
+        message="Are you sure you want to delete this team? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => {
+          if (deleteConfirmId) handleDelete(deleteConfirmId);
+          setDeleteConfirmId(null);
+        }}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
     </div>
   );
 };

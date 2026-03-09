@@ -1,5 +1,6 @@
 import React from 'react';
 import { Player } from '../../types';
+import { formatCurrency } from '../../utils/formatters';
 
 interface PlayerCardProps {
   player: Player;
@@ -87,7 +88,7 @@ const PlayerCard = React.memo<PlayerCardProps>(({ player, index, isAuctioneer, o
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              ₹{(player.soldAmount! / 1000).toFixed(1)}K
+              {formatCurrency(player.soldAmount!)}
             </span>
           </div>
         </div>

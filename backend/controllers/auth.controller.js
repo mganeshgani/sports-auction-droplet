@@ -7,7 +7,7 @@ const crypto = require('crypto');
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     // Validation
     if (!name || !email || !password) {
@@ -26,12 +26,13 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Create user (everyone is auctioneer by default, only you are admin)
+    // Create user
+    // SECURITY: role is hardcoded. Never accept role from client.
     const user = await User.create({
       name,
       email,
       password,
-      role: role || 'auctioneer' // Default to auctioneer
+      role: 'auctioneer'
     });
 
     // Generate token
@@ -50,6 +51,7 @@ exports.register = async (req, res) => {
         data: {
           user: {
             id: user._id,
+            _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role
@@ -129,6 +131,7 @@ exports.login = async (req, res) => {
         data: {
           user: {
             id: user._id,
+            _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,

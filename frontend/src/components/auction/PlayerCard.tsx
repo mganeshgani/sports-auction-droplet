@@ -24,6 +24,7 @@ interface PlayerCardProps {
   loading: boolean;
   isAuctioneer?: boolean;
   enabledFields?: EnabledField[];
+  bidError?: string | null;
 }
 
 const getPositionColor = (position: string) => {
@@ -60,6 +61,7 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
   loading,
   isAuctioneer = true,
   enabledFields = [],
+  bidError,
 }) => {
   const positionColors = useMemo(() => getPositionColor(player.position || ''), [player.position]);
   const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
@@ -336,6 +338,7 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                 <img
                   src={player.photoUrl ? (player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`) : '/default-avatar.png'}
                   alt={player.name}
+                  loading="lazy"
                   className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 rounded-full object-cover border-4 border-slate-800"
                   style={{ boxShadow: `0 0 40px ${positionColors.light}` }}
                 />
@@ -389,19 +392,27 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
               </label>
               <input
                 type="number"
-                value={soldAmount}
-                onChange={(e) => setSoldAmount(Number(e.target.value))}
-                onFocus={(e) => {
-                  if (soldAmount === 0) {
-                    setSoldAmount(0);
-                    e.target.select(); // Select all text (the 0) so typing replaces it
-                  }
+                value={soldAmount || ''}
+                onChange={(e) => {
+                  setSoldAmount(Number(e.target.value));
                 }}
-                className="w-full px-4 sm:px-6 py-3 sm:py-4 text-lg sm:text-xl md:text-2xl font-bold bg-slate-800/80 border-2 border-amber-500/40 rounded-lg sm:rounded-xl text-white focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 transition-all"
+                className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-lg sm:text-xl md:text-2xl font-bold bg-slate-800/80 border-2 rounded-lg sm:rounded-xl text-white focus:outline-none focus:ring-4 transition-all ${
+                  bidError
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20 animate-[shake_0.4s_ease-in-out]'
+                    : 'border-amber-500/40 focus:border-amber-500 focus:ring-amber-500/20'
+                }`}
                 placeholder="Enter amount"
                 disabled={loading}
-                style={{ boxShadow: '0 4px 20px rgba(234, 179, 8, 0.15)' }}
+                style={{ boxShadow: bidError ? '0 4px 20px rgba(239, 68, 68, 0.25)' : '0 4px 20px rgba(234, 179, 8, 0.15)' }}
               />
+              {bidError && (
+                <p className="mt-1.5 text-red-400 text-xs sm:text-sm font-medium flex items-center gap-1.5 animate-[fadeIn_0.2s_ease-out]">
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  {bidError}
+                </p>
+              )}
             </div>
 
             {/* Ultra Premium Action Buttons - Designer Edition */}

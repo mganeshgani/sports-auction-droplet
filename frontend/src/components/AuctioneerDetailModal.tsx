@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
+import ConfirmModal from './ConfirmModal';
 
 interface Auctioneer {
   _id: string;
@@ -106,11 +107,10 @@ const AuctioneerDetailModal: React.FC<AuctioneerDetailModalProps> = ({
     }
   };
 
-  const handleRevokeAccess = async () => {
-    if (!window.confirm('Are you sure you want to revoke access for this auctioneer?')) {
-      return;
-    }
+  const [revokeConfirm, setRevokeConfirm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
+  const handleRevokeAccess = async () => {
     try {
       setLoading(true);
       setError('');
@@ -136,10 +136,6 @@ const AuctioneerDetailModal: React.FC<AuctioneerDetailModalProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this auctioneer? This action cannot be undone.')) {
-      return;
-    }
-
     try {
       setLoading(true);
       setError('');
@@ -465,7 +461,7 @@ Type "DELETE" to confirm this action.`;
                   {accessDays > 0 ? `Grant ${accessDays} Days Access` : 'Grant Unlimited Access'}
                 </button>
                 <button
-                  onClick={handleRevokeAccess}
+                  onClick={() => setRevokeConfirm(true)}
                   disabled={loading}
                   className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
                 >
@@ -488,7 +484,7 @@ Type "DELETE" to confirm this action.`;
                   Reset All Data
                 </button>
                 <button
-                  onClick={handleDelete}
+                  onClick={() => setDeleteConfirm(true)}
                   disabled={loading}
                   className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
                 >
@@ -499,6 +495,30 @@ Type "DELETE" to confirm this action.`;
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={revokeConfirm}
+        title="Revoke Access?"
+        message="Are you sure you want to revoke access for this auctioneer?"
+        confirmLabel="Revoke"
+        variant="warning"
+        onConfirm={() => {
+          setRevokeConfirm(false);
+          handleRevokeAccess();
+        }}
+        onCancel={() => setRevokeConfirm(false)}
+      />
+      <ConfirmModal
+        open={deleteConfirm}
+        title="Delete Auctioneer?"
+        message="Are you sure you want to delete this auctioneer? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => {
+          setDeleteConfirm(false);
+          handleDelete();
+        }}
+        onCancel={() => setDeleteConfirm(false)}
+      />
     </div>
   );
 };

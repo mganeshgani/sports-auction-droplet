@@ -1,6 +1,7 @@
 const Team = require('../models/team.model');
 const Player = require('../models/player.model');
 const cloudinary = require('../config/cloudinary');
+const { getTeamSummary } = require('../utils/teamSummary');
 
 // Create new team
 exports.createTeam = async (req, res) => {
@@ -87,7 +88,14 @@ exports.updateTeam = async (req, res) => {
       
       // Deduct soldAmount from remainingBudget if provided
       if (updateData.soldAmount && typeof updateData.soldAmount === 'number') {
-        team.remainingBudget = (team.remainingBudget || team.budget) - updateData.soldAmount;
+        // Recompute budget from aggregation (source of truth)
+        if (team.budget) {
+          const budgetUsed = await Player.aggregate([
+            { $match: { team: team._id, status: 'sold' } },
+            { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+          ]);
+          team.remainingBudget = team.budget - (budgetUsed[0]?.total || 0);
+        }
       }
       
       await team.save();
@@ -142,7 +150,12 @@ exports.updateTeam = async (req, res) => {
     if (name) team.name = name;
     if (totalSlots) team.totalSlots = totalSlots;
     if (budget !== undefined) {
-      const spentBudget = team.budget ? (team.budget - (team.remainingBudget || 0)) : 0;
+      // Recompute spent from aggregation (source of truth)
+      const budgetUsed = await Player.aggregate([
+        { $match: { team: team._id, status: 'sold' } },
+        { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+      ]);
+      const spentBudget = budgetUsed[0]?.total || 0;
       team.budget = budget;
       team.remainingBudget = budget - spentBudget;
     }
@@ -198,59 +211,52 @@ exports.deleteTeam = async (req, res) => {
   }
 };
 
-// Get all teams - OPTIMIZED
+// Get all teams - with live-computed stats
 exports.getAllTeams = async (req, res) => {
   try {
-    // OPTIMIZED: Only populate necessary fields, not full player objects
-    // Filter by logged-in auctioneer
     const teams = await Team.find({ auctioneer: req.user._id })
-      .populate('players', 'name regNo class position soldAmount photoUrl') // Only specific fields
-      .sort({ name: 1 }) // Sort alphabetically
-      .lean(); // Return plain objects (faster)
+      .sort({ name: 1 })
+      .lean();
+
+    const teamsWithStats = await Promise.all(teams.map(team => getTeamSummary(team)));
     
-    // Set cache headers for better performance
     res.set('Cache-Control', 'private, max-age=5');
-    res.json(teams);
+    res.json(teamsWithStats);
   } catch (error) {
     console.error('Error fetching teams:', error);
     res.status(500).json({ error: 'Error fetching teams' });
   }
 };
 
-// Get team by ID - OPTIMIZED
+// Get team by ID - with live-computed stats
 exports.getTeamById = async (req, res) => {
   try {
     const { teamId } = req.params;
-    // Filter by logged-in auctioneer
-    const team = await Team.findOne({ 
-      _id: teamId,
-      auctioneer: req.user._id 
-    })
-      .populate('players', 'name regNo class position soldAmount photoUrl')
-      .lean();
+    const team = await Team.findOne({ _id: teamId, auctioneer: req.user._id }).lean();
     
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
 
+    const teamWithStats = await getTeamSummary(team);
     res.set('Cache-Control', 'private, max-age=5');
-    res.json(team);
+    res.json(teamWithStats);
   } catch (error) {
     console.error('Error fetching team:', error);
     res.status(500).json({ error: 'Error fetching team' });
   }
 };
 
-// Get final results - OPTIMIZED
+// Get final results - with live-computed stats
 exports.getFinalResults = async (req, res) => {
   try {
-    // Filter by logged-in auctioneer
     const teams = await Team.find({ auctioneer: req.user._id })
-      .populate('players', 'name regNo class position soldAmount photoUrl')
       .sort('name')
       .lean();
 
-    const results = teams.map(team => ({
+    const teamsWithStats = await Promise.all(teams.map(team => getTeamSummary(team)));
+
+    const results = teamsWithStats.map(team => ({
       teamName: team.name,
       logoUrl: team.logoUrl,
       totalPlayers: team.filledSlots,

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCurrency } from '../../utils/formatters';
 
 interface Team {
   _id: string;
@@ -97,7 +98,7 @@ const TeamSelectionModal: React.FC<TeamSelectionModalProps> = ({
                 <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Select Team</h2>
               </div>
               <p className="text-gray-400 text-xs sm:text-sm">
-                Choose the team for this player • Sold: <span className="text-green-400 font-bold">₹{soldAmount.toLocaleString()}</span>
+                Choose the team for this player • Sold: <span className="text-green-400 font-bold">{formatCurrency(soldAmount)}</span>
               </p>
             </div>
 
@@ -192,7 +193,7 @@ const TeamSelectionModal: React.FC<TeamSelectionModalProps> = ({
                               <span className="text-xs sm:text-sm">💰</span> Budget
                             </span>
                             <span className={`text-[10px] sm:text-xs font-bold ${affordable ? 'text-green-400' : 'text-red-400'}`}>
-                              ₹{(team.remainingBudget || 0).toLocaleString()}
+                              {formatCurrency(team.remainingBudget || 0)}
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
@@ -240,7 +241,7 @@ const TeamSelectionModal: React.FC<TeamSelectionModalProps> = ({
                           <div className="flex items-center justify-between text-[10px] sm:text-xs">
                             <span className="text-gray-500">After:</span>
                             <span className="text-yellow-400 font-bold">
-                              ₹{((team.remainingBudget || 0) - soldAmount).toLocaleString()}
+                              {formatCurrency((team.remainingBudget || 0) - soldAmount)}
                             </span>
                           </div>
                         </div>

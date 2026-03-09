@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Player, Team } from '../types';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../contexts/AuthContext';
 import { playerService, teamService, clearCache } from '../services/api';
 import { initializeSocket } from '../services/socket';
 import UnsoldPlayerCard from '../components/unsold/UnsoldPlayerCard';
-import { useDisplaySettings } from '../hooks/useDisplaySettings';
+
+const CELEBRATION_THROTTLE_MS = 3000;
 
 const UnsoldPage: React.FC = () => {
   const { isAuctioneer } = useAuth();
@@ -18,11 +19,8 @@ const UnsoldPage: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>('');
 
   const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
+  const lastCelebrationRef = useRef(0);
   
-  // Display settings for dynamic fields
-  const { getEnabledFields } = useDisplaySettings();
-  const enabledFields = useMemo(() => getEnabledFields(), [getEnabledFields]);
-
   const fetchUnsoldPlayers = useCallback(async (bypassCache = false) => {
     try {
       const data = await playerService.getUnsoldPlayers(!bypassCache); // Use cache unless bypassing
@@ -67,14 +65,48 @@ const UnsoldPage: React.FC = () => {
       }, 300);
     };
 
-    // Listen to relevant events
-    socket.on('playerAdded', debouncedFetch);
-    socket.on('playerDeleted', debouncedFetch);
-    socket.on('playerSold', debouncedFetch);
-    socket.on('playerMarkedUnsold', debouncedFetch);
-    socket.on('playerUpdated', debouncedFetch);
+    // Listen to relevant events — update state in-place from payloads
+    socket.on('playerAdded', (newPlayer: any) => {
+      // A newly added player won't be unsold — ignore
+    });
+    socket.on('playerDeleted', (data: any) => {
+      const deletedId = data?.playerId || data?._id;
+      if (deletedId) {
+        setUnsoldPlayers(prev => prev.filter(p => p._id !== deletedId));
+      }
+    });
+    socket.on('playerSold', (soldPlayer: any) => {
+      // Remove from unsold list if it was there
+      const id = soldPlayer?._id || soldPlayer?.player?._id;
+      if (id) {
+        setUnsoldPlayers(prev => prev.filter(p => p._id !== id));
+      }
+      // Update team in-place
+      const team = soldPlayer?.team;
+      if (team) {
+        setTeams(prev => prev.map(t => t._id === team._id ? { ...t, ...team } : t));
+      }
+    });
+    socket.on('playerMarkedUnsold', (player: any) => {
+      if (player?._id) {
+        setUnsoldPlayers(prev => {
+          if (prev.some(p => p._id === player._id)) return prev;
+          return [...prev, player];
+        });
+      }
+    });
+    socket.on('playerUpdated', (updatedPlayer: any) => {
+      if (updatedPlayer?.status === 'unsold') {
+        setUnsoldPlayers(prev => {
+          const exists = prev.some(p => p._id === updatedPlayer._id);
+          if (exists) return prev.map(p => p._id === updatedPlayer._id ? { ...p, ...updatedPlayer } : p);
+          return [...prev, updatedPlayer];
+        });
+      } else if (updatedPlayer?._id) {
+        setUnsoldPlayers(prev => prev.filter(p => p._id !== updatedPlayer._id));
+      }
+    });
     socket.on('dataReset', () => {
-      console.log('Data reset - clearing cache');
       clearCache();
       fetchUnsoldPlayers(true);
       fetchTeams(true);
@@ -109,12 +141,16 @@ const UnsoldPage: React.FC = () => {
       return;
     }
 
-    // OPTIMIZED: Play confetti immediately (before API calls)
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+    // OPTIMIZED: Play confetti immediately (throttled to avoid jank at scale)
+    const now = Date.now();
+    if (now - lastCelebrationRef.current >= CELEBRATION_THROTTLE_MS) {
+      lastCelebrationRef.current = now;
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
 
     // OPTIMIZED: Update UI immediately (optimistic update)
     setTeams(prevTeams => 
@@ -219,14 +255,13 @@ const UnsoldPage: React.FC = () => {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {unsoldPlayers.map((player) => (
               <UnsoldPlayerCard
                 key={player._id}
                 player={player}
                 isAuctioneer={isAuctioneer}
                 onAuction={handleAuctionClick}
-                enabledFields={enabledFields}
               />
             ))}
           </div>
@@ -235,131 +270,156 @@ const UnsoldPage: React.FC = () => {
 
       {/* Auction Modal */}
       {showModal && selectedPlayer && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl sm:rounded-2xl border border-gray-700 max-w-md w-full shadow-2xl">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-emerald-600/20 to-green-600/20 border-b border-gray-700 px-4 sm:px-6 py-3 sm:py-4 rounded-t-xl sm:rounded-t-2xl">
-              <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2 sm:gap-3">
-                <span>🔨</span>
-                Auction Player
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-400 mt-1">Enter details to auction {selectedPlayer.name}</p>
-            </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.9)', backdropFilter: 'blur(12px)' }}
+          onClick={() => { setShowModal(false); setSelectedPlayer(null); setSoldAmount(0); setSelectedTeam(''); }}
+        >
+          <div
+            className="relative w-full max-w-md overflow-hidden rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(165deg, #0a0a0a 0%, #141414 40%, #0d0d0d 100%)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+              boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.95), 0 0 80px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255,255,255,0.05)',
+              maxHeight: 'calc(100vh - 2rem)'
+            }}
+          >
+            {/* Top Accent */}
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.6) 50%, transparent 100%)' }}
+            />
 
-            {/* Modal Body */}
-            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
-              {/* Player Info */}
-              <div className="bg-gray-900/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-700/50">
-                <div className="flex items-center gap-3 sm:gap-4">
-                  {selectedPlayer.photoUrl && selectedPlayer.photoUrl.trim() !== '' ? (
-                    <img 
-                      src={selectedPlayer.photoUrl.startsWith('http') ? selectedPlayer.photoUrl : `${BACKEND_URL}${selectedPlayer.photoUrl}`} 
-                      alt={selectedPlayer.name}
-                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-emerald-500"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.parentElement!.innerHTML = `<div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center text-xl sm:text-2xl font-black text-white">${selectedPlayer.name.charAt(0)}</div>`;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center text-xl sm:text-2xl font-black text-white">
-                      {selectedPlayer.name.charAt(0)}
-                    </div>
-                  )}
+            {/* Header */}
+            <div className="relative px-6 py-5" style={{
+              background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.06) 0%, transparent 100%)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.04)'
+            }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {/* Player Photo */}
+                  <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)',
+                      border: '1.5px solid rgba(16, 185, 129, 0.25)'
+                    }}
+                  >
+                    {selectedPlayer.photoUrl && selectedPlayer.photoUrl.trim() !== '' ? (
+                      <img
+                        src={selectedPlayer.photoUrl.startsWith('http') ? selectedPlayer.photoUrl : `${BACKEND_URL}${selectedPlayer.photoUrl}`}
+                        alt={selectedPlayer.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-lg font-light" style={{ color: 'rgba(16, 185, 129, 0.7)' }}>{selectedPlayer.name.charAt(0)}</span>
+                    )}
+                  </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-white">{selectedPlayer.name}</h3>
-                    {(() => {
-                      const highPriorityField = enabledFields.find(f => f.isHighPriority);
-                      let displayValue = '';
-                      if (highPriorityField) {
-                        const val = (selectedPlayer as any)[highPriorityField.fieldName] || (selectedPlayer.customFields && selectedPlayer.customFields[highPriorityField.fieldName]);
-                        if (val) displayValue = String(val);
-                      }
-                      if (!displayValue && enabledFields.length > 0) {
-                        for (const field of enabledFields) {
-                          const val = (selectedPlayer as any)[field.fieldName] || (selectedPlayer.customFields && selectedPlayer.customFields[field.fieldName]);
-                          if (val) { displayValue = String(val); break; }
-                        }
-                      }
-                      return displayValue ? (
-                        <p className="text-[10px] sm:text-xs text-amber-400 font-bold">{displayValue}</p>
-                      ) : null;
-                    })()}
+                    <h2 className="text-lg font-semibold tracking-tight text-white">{selectedPlayer.name}</h2>
+                    <p className="text-[11px] text-gray-500 font-medium">Auction this player</p>
                   </div>
                 </div>
+                <button
+                  onClick={() => { setShowModal(false); setSelectedPlayer(null); setSoldAmount(0); setSelectedTeam(''); }}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+                  style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                >
+                  <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
+            </div>
 
-              {/* Amount Input */}
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">
-                  Sold Amount (₹)
-                </label>
-                <input
-                  type="number"
-                  value={soldAmount || ''}
-                  onChange={(e) => setSoldAmount(Number(e.target.value))}
-                  placeholder="Enter amount..."
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/50 border-2 border-gray-700 rounded-lg sm:rounded-xl text-white font-bold text-base sm:text-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                  autoFocus
-                />
-              </div>
+            {/* Body */}
+            <div className="overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 12rem)' }}>
+              <div className="p-6 space-y-5">
+                {/* Amount Input */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1.5">Sold Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={soldAmount || ''}
+                    onChange={(e) => setSoldAmount(Number(e.target.value))}
+                    placeholder="Enter amount..."
+                    autoFocus
+                    className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-all duration-300"
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = 'rgba(16, 185, 129, 0.4)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(16, 185, 129, 0.08)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
+                  />
+                </div>
 
-              {/* Team Selection */}
-              <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-300 mb-1.5 sm:mb-2">
-                  Select Team
-                </label>
-                <div className="space-y-1.5 sm:space-y-2 max-h-36 sm:max-h-48 overflow-y-auto custom-scrollbar">
-                  {teams.map((team) => (
-                    <button
-                      key={team._id}
-                      onClick={() => setSelectedTeam(team._id)}
-                      className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 transition-all text-left ${
-                        selectedTeam === team._id
-                          ? 'bg-emerald-600 border-emerald-500 text-white'
-                          : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-emerald-500/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-bold text-xs sm:text-sm">{team.name}</p>
-                          <p className="text-[10px] sm:text-xs opacity-80">
-                            Budget: ₹{team.remainingBudget?.toLocaleString() || 0} • Players: {team.players.length}/{team.totalSlots || 15}
-                          </p>
+                {/* Team Selection */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1.5">Select Team</label>
+                  <div className="space-y-1.5 max-h-44 overflow-y-auto custom-scrollbar pr-1">
+                    {teams.map((team) => (
+                      <button
+                        key={team._id}
+                        type="button"
+                        onClick={() => setSelectedTeam(team._id)}
+                        className="w-full px-3 py-2.5 rounded-xl text-left transition-all duration-200"
+                        style={{
+                          background: selectedTeam === team._id ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255,255,255,0.02)',
+                          border: `1px solid ${selectedTeam === team._id ? 'rgba(16, 185, 129, 0.35)' : 'rgba(255,255,255,0.05)'}`,
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className={`text-sm font-medium ${selectedTeam === team._id ? 'text-emerald-300' : 'text-white'}`}>{team.name}</p>
+                            <p className="text-[10px] text-gray-500">
+                              Budget: ₹{team.remainingBudget?.toLocaleString() || 0} · {team.players.length}/{team.totalSlots || 15}
+                            </p>
+                          </div>
+                          {selectedTeam === team._id && (
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.3)' }}>
+                              <span className="text-[10px] text-emerald-400">✓</span>
+                            </div>
+                          )}
                         </div>
-                        {selectedTeam === team._id && (
-                          <span className="text-lg sm:text-xl">✓</span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setShowModal(false); setSelectedPlayer(null); setSoldAmount(0); setSelectedTeam(''); }}
+                    className="flex-1 py-3 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-[1.02]"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#9ca3af' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAuctionConfirm}
+                    disabled={!soldAmount || !selectedTeam}
+                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100"
+                    style={{
+                      background: (!soldAmount || !selectedTeam) ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, #10b981 0%, #34d399 50%, #10b981 100%)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      boxShadow: (!soldAmount || !selectedTeam) ? 'none' : '0 4px 20px rgba(16, 185, 129, 0.3)',
+                      color: '#fff'
+                    }}
+                  >
+                    Confirm Auction
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-900/50 rounded-b-xl sm:rounded-b-2xl border-t border-gray-700 flex gap-2 sm:gap-3">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setSelectedPlayer(null);
-                  setSoldAmount(0);
-                  setSelectedTeam('');
-                }}
-                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 hover:bg-gray-600 rounded-lg sm:rounded-xl font-bold text-white text-sm sm:text-base transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAuctionConfirm}
-                disabled={!soldAmount || !selectedTeam}
-                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 rounded-lg sm:rounded-xl font-bold text-white text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2"
-              >
-                <span>✓</span>
-                Confirm Auction
-              </button>
-            </div>
+            {/* Bottom Accent */}
+            <div className="absolute bottom-0 left-0 right-0 h-[1px]"
+              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.2) 50%, transparent 100%)' }}
+            />
           </div>
         </div>
       )}

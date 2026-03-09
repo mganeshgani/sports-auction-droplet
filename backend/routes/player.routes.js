@@ -25,6 +25,9 @@ const photoUpload = multer({
   }
 });
 
+// Pre-upload photo for public registration (no auth needed)
+router.post('/upload-photo-public', photoUpload.single('photo'), playerController.uploadPhotoPublic);
+
 // Player registration with photo upload (public - uses token validation)
 router.post('/register', photoUpload.single('photo'), playerController.registerPlayer);
 
@@ -42,6 +45,9 @@ router.delete('/', playerController.deleteAllPlayers);
 
 // Get all players
 router.get('/', playerController.getAllPlayers);
+
+// Pre-upload photo to Cloudinary (returns URL immediately)
+router.post('/upload-photo', photoUpload.single('photo'), playerController.uploadPhoto);
 
 // Create player from admin panel (must be before /:playerId)
 router.post('/', photoUpload.single('photo'), playerController.createPlayer);

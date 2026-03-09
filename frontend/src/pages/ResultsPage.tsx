@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { resultsService, clearCache } from '../services/api';
 import TeamCard from '../components/results/TeamCard';
 import { useDisplaySettings } from '../hooks/useDisplaySettings';
+import { formatCurrency } from '../utils/formatters';
 
 const ResultsPage: React.FC = () => {
   const { isAuctioneer } = useAuth();
@@ -16,6 +17,8 @@ const ResultsPage: React.FC = () => {
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [playerToChangeTeam, setPlayerToChangeTeam] = useState<Player | null>(null);
   const [newTeamId, setNewTeamId] = useState<string>('');
+  const [showUnsoldPlayers, setShowUnsoldPlayers] = useState(false);
+  const [showAvailablePlayers, setShowAvailablePlayers] = useState(false);
   
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
   
@@ -27,12 +30,14 @@ const ResultsPage: React.FC = () => {
   const stats = useMemo(() => {
     const sold = players.filter((p: Player) => p.status === 'sold');
     const unsold = players.filter((p: Player) => p.status === 'unsold');
+    const available = players.filter((p: Player) => p.status === 'available');
     const totalSpent = sold.reduce((sum: number, p: Player) => sum + (p.soldAmount || 0), 0);
     
     return {
       total: players.length,
       sold: sold.length,
       unsold: unsold.length,
+      available: available.length,
       totalSpent
     };
   }, [players]);
@@ -126,43 +131,48 @@ const ResultsPage: React.FC = () => {
       }, 300);
     };
 
-    socket.on('playerSold', debouncedFetch);
-    socket.on('playerMarkedUnsold', debouncedFetch);
+    socket.on('playerSold', (data: any) => {
+      // Update in-place: move player to sold and update team
+      const soldPlayer = data?.player || data;
+      if (soldPlayer?._id) {
+        setPlayers(prev => prev.map(p => p._id === soldPlayer._id ? { ...p, ...soldPlayer } : p));
+      }
+      const team = data?.team;
+      if (team?._id) {
+        setTeams(prev => prev.map(t => t._id === team._id ? { ...t, ...team } : t));
+      }
+    });
+    socket.on('playerMarkedUnsold', (player: any) => {
+      if (player?._id) {
+        setPlayers(prev => prev.map(p => p._id === player._id ? { ...p, ...player } : p));
+      }
+    });
     socket.on('dataReset', () => {
       console.log('Data reset - clearing cache');
       clearCache();
       fetchData(false);
     });
     socket.on('playerUpdated', (updatedPlayer: any) => {
-      console.log('🔄 Player updated event received');
       setPlayers(prevPlayers => prevPlayers.map(p => 
         p._id === updatedPlayer._id ? updatedPlayer : p
       ));
-      debouncedFetch();
     });
     socket.on('teamUpdated', (updatedTeam: any) => {
-      console.log('🔄 Team updated event received:', updatedTeam.name);
-      // Immediately update the specific team for instant UI feedback
       setTeams(prevTeams => prevTeams.map(t => 
         t._id === updatedTeam._id ? updatedTeam : t
       ));
     });
     socket.on('playerRemovedFromTeam', (data: { player: any; team: any }) => {
-      console.log('🔄 Player removed from team event received');
-      // Immediately update the team in state for instant UI refresh
       if (data.team) {
         setTeams(prevTeams => prevTeams.map(t => 
           t._id === data.team._id ? data.team : t
         ));
       }
-      // Also update the player in state
       if (data.player) {
         setPlayers(prevPlayers => prevPlayers.map(p => 
           p._id === data.player._id ? data.player : p
         ));
       }
-      // Then do a background refresh to ensure consistency
-      debouncedFetch();
     });
 
     socket.on('disconnect', () => {
@@ -241,6 +251,150 @@ const ResultsPage: React.FC = () => {
     });
   }, [teams, players]);
 
+  // CSV Export
+  const exportCSV = useCallback(() => {
+    const rows: string[][] = [];
+    const sorted = [...teamsWithPlayers].sort((a, b) => b.actualSpent - a.actualSpent);
+    const totalBudgetAll = sorted.reduce((s, t) => s + (t.team.budget || 0), 0);
+    const totalSpentAll = sorted.reduce((s, t) => s + t.actualSpent, 0);
+    const totalRemainingAll = sorted.reduce((s, t) => s + t.actualRemaining, 0);
+    const totalPlayersAll = sorted.reduce((s, t) => s + t.teamPlayers.length, 0);
+    const now = new Date();
+
+    // ===== REPORT TITLE =====
+    rows.push(['AUCTION RESULTS']);
+    rows.push([`Date: ${now.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, '', `Time: ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`]);
+    rows.push([]);
+
+    // ===== SUMMARY =====
+    rows.push(['========================================================']);
+    rows.push(['SUMMARY']);
+    rows.push(['========================================================']);
+    rows.push([]);
+    rows.push(['Teams', String(sorted.length)]);
+    rows.push(['Players Bought', String(totalPlayersAll)]);
+    rows.push(['Players Not Sold', String(players.filter(p => p.status === 'unsold').length)]);
+    rows.push(['Players Waiting', String(players.filter(p => p.status === 'available').length)]);
+    rows.push([]);
+    rows.push(['Total Budget', formatCurrency(totalBudgetAll)]);
+    rows.push(['Total Spent', formatCurrency(totalSpentAll)]);
+    rows.push(['Money Left', formatCurrency(totalRemainingAll)]);
+    rows.push([]);
+    rows.push([]);
+
+    // ===== TEAM RANKINGS =====
+    rows.push(['========================================================']);
+    rows.push(['TEAM RANKINGS']);
+    rows.push(['========================================================']);
+    rows.push([]);
+    rows.push(['Rank', 'Team Name', 'Players', 'Budget', 'Spent', 'Left', 'Slots', '% Used']);
+    rows.push(['----', '---------', '-------', '------', '-----', '----', '-----', '------']);
+    sorted.forEach(({ team, teamPlayers, actualFilledSlots, actualSpent, actualRemaining, budgetUsedPercentage }, i) => {
+      rows.push([
+        String(i + 1),
+        team.name,
+        String(teamPlayers.length),
+        formatCurrency(team.budget || 0),
+        formatCurrency(actualSpent),
+        formatCurrency(actualRemaining),
+        `${actualFilledSlots} of ${team.totalSlots}`,
+        `${budgetUsedPercentage}%`,
+      ]);
+    });
+    rows.push([]);
+    rows.push([]);
+
+    // ===== TEAM WISE PLAYER DETAILS =====
+    rows.push(['========================================================']);
+    rows.push(['TEAM WISE PLAYER DETAILS']);
+    rows.push(['========================================================']);
+
+    sorted.forEach(({ team, teamPlayers, actualFilledSlots, actualSpent, actualRemaining, budgetUsedPercentage }, i) => {
+      rows.push([]);
+      rows.push(['--------------------------------------------------------']);
+      rows.push([`${i + 1}. ${team.name}`]);
+      rows.push(['--------------------------------------------------------']);
+      rows.push(['Budget', formatCurrency(team.budget || 0), '', 'Spent', formatCurrency(actualSpent)]);
+      rows.push(['Left', formatCurrency(actualRemaining), '', 'Slots', `${actualFilledSlots} of ${team.totalSlots}`]);
+      rows.push(['% Used', `${budgetUsedPercentage}%`]);
+      rows.push([]);
+
+      if (teamPlayers.length === 0) {
+        rows.push(['', 'No players bought yet']);
+      } else {
+        const enabledFieldsForCSV = enabledFields.slice(0, 4);
+        const playerHeader = ['No.', 'Player Name'];
+        enabledFieldsForCSV.forEach(f => playerHeader.push(f.fieldLabel));
+        playerHeader.push('Price');
+        rows.push(playerHeader);
+
+        const dividerRow = playerHeader.map(() => '----');
+        rows.push(dividerRow);
+
+        const sortedPlayers = [...teamPlayers].sort((a, b) => (b.soldAmount || 0) - (a.soldAmount || 0));
+        sortedPlayers.forEach((p, j) => {
+          const playerRow = [String(j + 1), p.name];
+          const pAny = p as any;
+          enabledFieldsForCSV.forEach(f => {
+            const val = pAny[f.fieldName] || (pAny.customFields && pAny.customFields[f.fieldName]) || '';
+            playerRow.push(String(val));
+          });
+          playerRow.push(formatCurrency(p.soldAmount || 0));
+          rows.push(playerRow);
+        });
+
+        rows.push([]);
+        rows.push(['', '', ...enabledFieldsForCSV.map(() => ''), `Total: ${formatCurrency(actualSpent)}`]);
+      }
+      rows.push([]);
+    });
+
+    rows.push([]);
+    rows.push([]);
+
+    // ===== UNSOLD PLAYERS =====
+    const unsold = players.filter(p => p.status === 'unsold');
+    if (unsold.length > 0) {
+      rows.push(['========================================================']);
+      rows.push(['PLAYERS NOT SOLD']);
+      rows.push(['========================================================']);
+      rows.push([]);
+      const enabledFieldsForCSV = enabledFields.slice(0, 4);
+      const unsoldHeader = ['No.', 'Player Name'];
+      enabledFieldsForCSV.forEach(f => unsoldHeader.push(f.fieldLabel));
+      rows.push(unsoldHeader);
+      rows.push(unsoldHeader.map(() => '----'));
+      unsold.forEach((p, i) => {
+        const row = [String(i + 1), p.name];
+        const pAny = p as any;
+        enabledFieldsForCSV.forEach(f => {
+          const val = pAny[f.fieldName] || (pAny.customFields && pAny.customFields[f.fieldName]) || '';
+          row.push(String(val));
+        });
+        rows.push(row);
+      });
+      rows.push([]);
+      rows.push([]);
+    }
+
+    // ===== FOOTER =====
+    rows.push(['========================================================']);
+    rows.push(['End of Report']);
+    rows.push(['========================================================']);
+
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `auction-results-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }, [teamsWithPlayers, players, enabledFields]);
+
+  // Unsold and available players
+  const unsoldPlayers = useMemo(() => players.filter(p => p.status === 'unsold'), [players]);
+  const availablePlayers = useMemo(() => players.filter(p => p.status === 'available'), [players]);
+
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{
       background: 'linear-gradient(160deg, #000000 0%, #0a0a0a 25%, #1a1a1a 50%, #0f172a 75%, #1a1a1a 100%)'
@@ -272,6 +426,19 @@ const ResultsPage: React.FC = () => {
                 <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#10b981' }}></div>
                 <span className="text-[10px] sm:text-xs font-bold text-emerald-400">LIVE</span>
               </div>
+              {!loading && teams.length > 0 && (
+                <button
+                  onClick={exportCSV}
+                  className="ml-2 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                  }}
+                  title="Export results as CSV"
+                >
+                  📥 CSV
+                </button>
+              )}
             </div>
 
             {/* Right: Stats */}
@@ -308,6 +475,16 @@ const ResultsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="backdrop-blur-sm rounded-lg px-1.5 sm:px-2 py-1 flex-shrink-0" style={{
+                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(59, 130, 246, 0.1) 100%)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  boxShadow: '0 2px 10px rgba(59, 130, 246, 0.2)'
+                }}>
+                  <div>
+                    <p className="text-[8px] sm:text-[9px] text-blue-400/80 uppercase tracking-wider">Available</p>
+                    <p className="text-xs sm:text-sm font-black text-blue-400 leading-none">{stats.available}</p>
+                  </div>
+                </div>
+                <div className="backdrop-blur-sm rounded-lg px-1.5 sm:px-2 py-1 flex-shrink-0" style={{
                   background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(212, 175, 55, 0.1) 100%)',
                   border: '1px solid rgba(212, 175, 55, 0.4)',
                   boxShadow: '0 2px 10px rgba(212, 175, 55, 0.25)'
@@ -320,7 +497,7 @@ const ResultsPage: React.FC = () => {
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text'
                     }}>
-                      ₹{(stats.totalSpent / 1000).toFixed(0)}K
+                      {formatCurrency(stats.totalSpent)}
                     </p>
                   </div>
                 </div>
@@ -342,6 +519,22 @@ const ResultsPage: React.FC = () => {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-4 md:px-6 py-4">
+          {/* Empty State */}
+          {teamsWithPlayers.length === 0 && stats.sold === 0 && (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center max-w-md">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{
+                  background: 'rgba(212, 175, 55, 0.08)',
+                  border: '1px solid rgba(212, 175, 55, 0.15)'
+                }}>
+                  <span className="text-4xl">🏆</span>
+                </div>
+                <p className="text-lg font-medium text-gray-400">Auction hasn't started yet</p>
+                <p className="text-sm text-gray-600 mt-1">Results will appear here once players are sold to teams</p>
+              </div>
+            </div>
+          )}
+
           {/* Vertical Teams Grid - Optimized with memoized components */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-4">
             {teamsWithPlayers.map(({ team, teamPlayers, actualFilledSlots, actualRemaining, actualSpent, budgetUsedPercentage }, index) => (
@@ -362,185 +555,234 @@ const ResultsPage: React.FC = () => {
               />
             ))}
           </div>
+
+          {/* Unsold Players Section */}
+          {unsoldPlayers.length > 0 && (
+            <div className="mt-4 rounded-xl overflow-hidden" style={{
+              background: 'rgba(0,0,0,0.4)',
+              border: '1px solid rgba(239, 68, 68, 0.15)',
+            }}>
+              <button
+                onClick={() => setShowUnsoldPlayers(!showUnsoldPlayers)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-red-400">✗</span>
+                  <span className="text-sm font-semibold text-slate-300">Unsold Players</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">{unsoldPlayers.length}</span>
+                </div>
+                <span className={`text-slate-500 transition-transform ${showUnsoldPlayers ? 'rotate-180' : ''}`}>▼</span>
+              </button>
+              {showUnsoldPlayers && (
+                <div className="px-4 pb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {unsoldPlayers.map((p) => (
+                    <div key={p._id} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      {p.photoUrl ? (
+                        <img src={p.photoUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 flex-shrink-0">👤</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-300 truncate">{p.name}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{p.position || 'No position'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Available Players Section */}
+          {availablePlayers.length > 0 && (
+            <div className="mt-3 rounded-xl overflow-hidden" style={{
+              background: 'rgba(0,0,0,0.4)',
+              border: '1px solid rgba(212, 175, 55, 0.15)',
+            }}>
+              <button
+                onClick={() => setShowAvailablePlayers(!showAvailablePlayers)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400">●</span>
+                  <span className="text-sm font-semibold text-slate-300">Available (Not Yet Auctioned)</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">{availablePlayers.length}</span>
+                </div>
+                <span className={`text-slate-500 transition-transform ${showAvailablePlayers ? 'rotate-180' : ''}`}>▼</span>
+              </button>
+              {showAvailablePlayers && (
+                <div className="px-4 pb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {availablePlayers.map((p) => (
+                    <div key={p._id} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      {p.photoUrl ? (
+                        <img src={p.photoUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 flex-shrink-0">👤</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-300 truncate">{p.name}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{p.position || 'No position'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Team Details Modal - Ultra Premium */}
+      {/* Team Details Modal - Cinematic Premium */}
       {selectedTeam && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
-          style={{ background: 'rgba(0, 0, 0, 0.9)', backdropFilter: 'blur(8px)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.95)', backdropFilter: 'blur(16px)' }}
           onClick={() => setSelectedTeam(null)}
         >
           <div 
-            className="relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl"
+            className="relative w-full sm:max-w-5xl h-full sm:h-auto sm:max-h-[92vh] overflow-hidden sm:rounded-3xl flex flex-col"
             style={{
-              background: 'linear-gradient(165deg, #0a0a0a 0%, #141414 40%, #0d0d0d 100%)',
-              border: '1px solid rgba(212, 175, 55, 0.2)',
-              boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.95), 0 0 80px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)'
+              background: '#080808',
+              border: 'none',
+              boxShadow: '0 0 120px rgba(0, 0, 0, 0.9), 0 0 60px rgba(212, 175, 55, 0.08)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Top Accent Line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.6) 50%, transparent 100%)' }}
-            />
+            {/* ===== HERO SECTION ===== */}
+            <div className="relative flex-shrink-0" style={{ minHeight: '220px' }}>
+              {/* Background — team logo as blurred backdrop */}
+              <div className="absolute inset-0 overflow-hidden">
+                {selectedTeam.logoUrl ? (
+                  <img src={selectedTeam.logoUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.07] scale-150 blur-2xl" />
+                ) : (
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0f1923 0%, #0a0a0a 40%, #1a0f0a 100%)' }} />
+                )}
+                {/* Gradient overlays */}
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, rgba(212,175,55,0.06) 0%, transparent 40%)' }} />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #080808 0%, rgba(8,8,8,0.8) 50%, rgba(8,8,8,0.4) 100%)' }} />
+              </div>
 
-            {/* Header */}
-            <div className="sticky top-0 z-10 px-6 py-5" style={{
-              background: 'linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.9) 100%)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.04)'
-            }}>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-5">
-                  {/* Team Logo */}
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedTeam(null)}
+                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90"
+                style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <svg className="w-5 h-5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Hero Content */}
+              <div className="relative z-10 px-6 sm:px-8 pt-6 sm:pt-8 pb-6">
+                <div className="flex items-center gap-5 sm:gap-6">
+                  {/* Team Logo — large & cinematic */}
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%)',
-                      border: '2px solid rgba(212, 175, 55, 0.25)',
-                      boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.4)'
+                      background: 'linear-gradient(145deg, rgba(212,175,55,0.12) 0%, rgba(212,175,55,0.03) 100%)',
+                      border: '2px solid rgba(212,175,55,0.2)',
+                      boxShadow: '0 12px 40px rgba(0,0,0,0.6), 0 0 30px rgba(212,175,55,0.08)'
                     }}
                   >
                     {selectedTeam.logoUrl ? (
-                      <img src={selectedTeam.logoUrl} alt={selectedTeam.name} className="w-full h-full object-cover" />
+                      <img src={selectedTeam.logoUrl} alt={selectedTeam.name} loading="lazy" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-4xl font-extralight" style={{ color: '#D4AF37' }}>
+                      <span className="text-4xl sm:text-5xl font-extralight" style={{ color: 'rgba(212,175,55,0.6)' }}>
                         {selectedTeam.name.charAt(0)}
                       </span>
                     )}
                   </div>
-                  <div>
-                    <h2 className="text-3xl font-semibold tracking-tight text-white">
+
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight truncate">
                       {selectedTeam.name}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1 font-medium tracking-wide">Team Squad Overview</p>
+                    <p className="text-[11px] sm:text-xs text-white/30 font-medium tracking-[0.2em] uppercase mt-1">Squad Overview</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedTeam(null)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
-                  }}
-                >
-                  <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+
+                {/* Stats Row — glassmorphic pills */}
+                <div className="flex flex-wrap gap-2 sm:gap-3 mt-5 sm:mt-6">
+                  {(() => {
+                    const teamPlayers = selectedTeam.players && selectedTeam.players.length > 0
+                      ? selectedTeam.players
+                      : players.filter(p => {
+                          if (!p.team || p.status !== 'sold') return false;
+                          const playerTeamId = typeof p.team === 'object' ? (p.team as any)._id : p.team;
+                          return String(playerTeamId) === String(selectedTeam._id);
+                        });
+                    const spent = teamPlayers.reduce((sum, p) => sum + (p.soldAmount || 0), 0);
+                    const actualRemaining = selectedTeam.remainingBudget !== undefined && selectedTeam.remainingBudget !== null 
+                      ? selectedTeam.remainingBudget 
+                      : (selectedTeam.budget || 0) - spent;
+                    const actualSpent = (selectedTeam.budget || 0) - actualRemaining;
+                    const budgetPercent = ((actualSpent / (selectedTeam.budget || 1)) * 100);
+                    
+                    return (
+                      <>
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl"
+                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' }}
+                        >
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#D4AF37', boxShadow: '0 0 6px rgba(212,175,55,0.4)' }} />
+                          <span className="text-[10px] sm:text-[11px] text-white/40 uppercase tracking-wider">Budget</span>
+                          <span className="text-sm sm:text-base font-semibold text-white ml-1">{formatCurrency(selectedTeam.budget || 0)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl"
+                          style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)', backdropFilter: 'blur(8px)' }}
+                        >
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#10b981', boxShadow: '0 0 6px rgba(16,185,129,0.4)' }} />
+                          <span className="text-[10px] sm:text-[11px] text-white/40 uppercase tracking-wider">Spent</span>
+                          <span className="text-sm sm:text-base font-semibold text-emerald-400 ml-1">{formatCurrency(actualSpent)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl"
+                          style={{ background: actualRemaining < (selectedTeam.budget || 0) * 0.2 ? 'rgba(239,68,68,0.06)' : 'rgba(59,130,246,0.06)', border: `1px solid ${actualRemaining < (selectedTeam.budget || 0) * 0.2 ? 'rgba(239,68,68,0.12)' : 'rgba(59,130,246,0.12)'}`, backdropFilter: 'blur(8px)' }}
+                        >
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: actualRemaining < (selectedTeam.budget || 0) * 0.2 ? '#ef4444' : '#3b82f6', boxShadow: `0 0 6px ${actualRemaining < (selectedTeam.budget || 0) * 0.2 ? 'rgba(239,68,68,0.4)' : 'rgba(59,130,246,0.4)'}` }} />
+                          <span className="text-[10px] sm:text-[11px] text-white/40 uppercase tracking-wider">Left</span>
+                          <span className={`text-sm sm:text-base font-semibold ml-1 ${actualRemaining < (selectedTeam.budget || 0) * 0.2 ? 'text-red-400' : 'text-blue-400'}`}>{formatCurrency(actualRemaining)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl"
+                          style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.12)', backdropFilter: 'blur(8px)' }}
+                        >
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#a855f7', boxShadow: '0 0 6px rgba(168,85,247,0.4)' }} />
+                          <span className="text-[10px] sm:text-[11px] text-white/40 uppercase tracking-wider">Squad</span>
+                          <span className="text-sm sm:text-base font-semibold text-purple-400 ml-1">{selectedTeam.filledSlots || teamPlayers.length}<span className="text-white/20">/{selectedTeam.totalSlots}</span></span>
+                        </div>
+
+                        {/* Slim progress bar */}
+                        <div className="w-full mt-1">
+                          <div className="relative h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                            <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
+                              style={{
+                                width: `${Math.min(budgetPercent, 100)}%`,
+                                background: budgetPercent > 80 
+                                  ? 'linear-gradient(90deg, #ef4444, #dc2626)' 
+                                  : budgetPercent > 50 
+                                  ? 'linear-gradient(90deg, #D4AF37, #F0D770)' 
+                                  : 'linear-gradient(90deg, #10b981, #34d399)',
+                                boxShadow: `0 0 12px ${budgetPercent > 80 ? 'rgba(239,68,68,0.4)' : budgetPercent > 50 ? 'rgba(212,175,55,0.4)' : 'rgba(16,185,129,0.4)'}`
+                              }}
+                            />
+                          </div>
+                          <div className="flex justify-between mt-1.5">
+                            <span className="text-[9px] text-white/20 tracking-wider">{budgetPercent.toFixed(0)}% UTILIZED</span>
+                            <span className="text-[9px] text-white/20 tracking-wider">{(100 - budgetPercent).toFixed(0)}% AVAILABLE</span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
               </div>
 
-              {/* Team Stats Summary - Luxury Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
-                {(() => {
-                  const teamPlayers = selectedTeam.players && selectedTeam.players.length > 0
-                    ? selectedTeam.players
-                    : players.filter(p => {
-                        if (!p.team || p.status !== 'sold') return false;
-                        const playerTeamId = typeof p.team === 'object' ? (p.team as any)._id : p.team;
-                        return String(playerTeamId) === String(selectedTeam._id);
-                      });
-                  const spent = teamPlayers.reduce((sum, p) => sum + (p.soldAmount || 0), 0);
-                  const actualRemaining = selectedTeam.remainingBudget !== undefined && selectedTeam.remainingBudget !== null 
-                    ? selectedTeam.remainingBudget 
-                    : (selectedTeam.budget || 0) - spent;
-                  const actualSpent = (selectedTeam.budget || 0) - actualRemaining;
-                  
-                  return (
-                    <>
-                      <div className="rounded-xl p-4" style={{
-                        background: 'rgba(212, 175, 55, 0.06)',
-                        border: '1px solid rgba(212, 175, 55, 0.12)'
-                      }}>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">Total Budget</p>
-                        <p className="text-2xl font-light tracking-tight" style={{ color: '#D4AF37' }}>
-                          ₹{(selectedTeam.budget || 0) >= 100000 ? `${((selectedTeam.budget || 0) / 100000).toFixed(1)}L` : `${((selectedTeam.budget || 0) / 1000).toFixed(0)}K`}
-                        </p>
-                      </div>
-                      <div className="rounded-xl p-4" style={{
-                        background: 'rgba(16, 185, 129, 0.06)',
-                        border: '1px solid rgba(16, 185, 129, 0.12)'
-                      }}>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">Spent</p>
-                        <p className="text-2xl font-light tracking-tight text-emerald-400">
-                          ₹{actualSpent >= 100000 ? `${(actualSpent / 100000).toFixed(1)}L` : `${(actualSpent / 1000).toFixed(0)}K`}
-                        </p>
-                      </div>
-                      <div className="rounded-xl p-4" style={{
-                        background: actualRemaining < (selectedTeam.budget || 0) * 0.2 ? 'rgba(239, 68, 68, 0.06)' : 'rgba(59, 130, 246, 0.06)',
-                        border: actualRemaining < (selectedTeam.budget || 0) * 0.2 ? '1px solid rgba(239, 68, 68, 0.12)' : '1px solid rgba(59, 130, 246, 0.12)'
-                      }}>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">Remaining</p>
-                        <p className={`text-2xl font-light tracking-tight ${actualRemaining < (selectedTeam.budget || 0) * 0.2 ? 'text-red-400' : 'text-blue-400'}`}>
-                          ₹{actualRemaining >= 100000 ? `${(actualRemaining / 100000).toFixed(1)}L` : `${(actualRemaining / 1000).toFixed(0)}K`}
-                        </p>
-                      </div>
-                      <div className="rounded-xl p-4" style={{
-                        background: 'rgba(168, 85, 247, 0.06)',
-                        border: '1px solid rgba(168, 85, 247, 0.12)'
-                      }}>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">Squad</p>
-                        <p className="text-2xl font-light tracking-tight text-purple-400">
-                          {selectedTeam.filledSlots || teamPlayers.length}<span className="text-lg text-gray-500">/{selectedTeam.totalSlots}</span>
-                        </p>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-
-              {/* Budget Progress Bar */}
-              {(() => {
-                const teamPlayers = selectedTeam.players && selectedTeam.players.length > 0
-                  ? selectedTeam.players
-                  : players.filter(p => {
-                      if (!p.team || p.status !== 'sold') return false;
-                      const playerTeamId = typeof p.team === 'object' ? (p.team as any)._id : p.team;
-                      return String(playerTeamId) === String(selectedTeam._id);
-                    });
-                const spent = teamPlayers.reduce((sum, p) => sum + (p.soldAmount || 0), 0);
-                const actualRemaining = selectedTeam.remainingBudget !== undefined && selectedTeam.remainingBudget !== null 
-                  ? selectedTeam.remainingBudget 
-                  : (selectedTeam.budget || 0) - spent;
-                const actualSpent = (selectedTeam.budget || 0) - actualRemaining;
-                const budgetPercent = ((actualSpent / (selectedTeam.budget || 1)) * 100);
-                
-                return (
-                  <div className="mt-4">
-                    <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-                        style={{
-                          width: `${budgetPercent}%`,
-                          background: budgetPercent > 80 
-                            ? 'linear-gradient(90deg, #ef4444, #dc2626)' 
-                            : budgetPercent > 50 
-                            ? 'linear-gradient(90deg, #D4AF37, #F0D770)' 
-                            : 'linear-gradient(90deg, #10b981, #34d399)',
-                          boxShadow: `0 0 15px ${budgetPercent > 80 ? 'rgba(239,68,68,0.5)' : budgetPercent > 50 ? 'rgba(212,175,55,0.5)' : 'rgba(16,185,129,0.5)'}`
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between mt-2">
-                      <span className="text-[10px] text-gray-600">{budgetPercent.toFixed(0)}% utilized</span>
-                      <span className="text-[10px] text-gray-600">{(100 - budgetPercent).toFixed(0)}% available</span>
-                    </div>
-                  </div>
-                );
-              })()}
+              {/* Bottom edge line */}
+              <div className="absolute bottom-0 left-0 right-0 h-[1px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' }} />
             </div>
 
-            {/* Players Grid - Luxury Design */}
-            <div className="overflow-y-auto p-6 custom-scrollbar" style={{ maxHeight: 'calc(90vh - 320px)' }}>
+            {/* ===== PLAYERS SECTION ===== */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="px-6 sm:px-8 py-5 sm:py-6">
               {(() => {
-                // Use team.players array if available, otherwise filter from global players
                 const teamPlayers = selectedTeam.players && selectedTeam.players.length > 0
                   ? selectedTeam.players
                   : players.filter(p => {
@@ -551,141 +793,171 @@ const ResultsPage: React.FC = () => {
                 
                 if (teamPlayers.length === 0) {
                   return (
-                    <div className="flex items-center justify-center py-16">
+                    <div className="flex items-center justify-center py-20">
                       <div className="text-center">
-                        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                          style={{
-                            background: 'rgba(212, 175, 55, 0.08)',
-                            border: '1px solid rgba(212, 175, 55, 0.15)'
-                          }}
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                         >
-                          <span className="text-4xl">👥</span>
+                          <span className="text-3xl opacity-40">👥</span>
                         </div>
-                        <p className="text-lg font-medium text-gray-400">No Players Yet</p>
-                        <p className="text-sm text-gray-600 mt-1">This team hasn't acquired any players</p>
+                        <p className="text-base font-medium text-white/30">No Players Yet</p>
+                        <p className="text-xs text-white/15 mt-1">This team hasn't acquired any players</p>
                       </div>
                     </div>
                   );
                 }
 
+                // Sort by soldAmount descending (most expensive first)
+                const sortedPlayers = [...teamPlayers].sort((a, b) => (b.soldAmount || 0) - (a.soldAmount || 0));
+                const topPrice = sortedPlayers[0]?.soldAmount || 1;
+
                 return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {teamPlayers.map((player, index) => (
-                      <div key={player._id}
-                        className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.02]"
-                        style={{
-                          background: 'linear-gradient(165deg, rgba(20, 20, 20, 0.8) 0%, rgba(30, 30, 30, 0.6) 100%)',
-                          border: '1px solid rgba(255, 255, 255, 0.04)',
-                          boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5)'
-                        }}
-                      >
-                        {/* Ambient Glow */}
-                        <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-0 group-hover:opacity-30 blur-2xl transition-all duration-500"
-                          style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%)' }}
-                        />
+                  <>
+                    {/* Section label */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-4 rounded-full" style={{ background: '#D4AF37' }} />
+                        <span className="text-[11px] text-white/30 font-semibold uppercase tracking-[0.2em]">Players</span>
+                      </div>
+                      <span className="text-[11px] text-white/20">{teamPlayers.length} acquired</span>
+                    </div>
 
-                        <div className="relative p-4">
-                          <div className="flex items-center gap-4">
-                            {/* Rank Badge */}
-                            <div className="absolute top-3 left-3 w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold"
+                    {/* Player list — ranked list style */}
+                    <div className="space-y-2">
+                      {sortedPlayers.map((player, index) => {
+                        const priceRatio = (player.soldAmount || 0) / topPrice;
+                        const isMVP = index === 0 && teamPlayers.length > 1;
+                        
+                        return (
+                          <div key={player._id}
+                            className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.01]"
+                            style={{
+                              background: isMVP 
+                                ? 'linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(20,20,20,0.8) 40%, rgba(15,15,15,0.9) 100%)'
+                                : 'rgba(255,255,255,0.02)',
+                              border: `1px solid ${isMVP ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.04)'}`,
+                            }}
+                          >
+                            {/* Price bar — visual indicator */}
+                            <div className="absolute bottom-0 left-0 h-[2px] rounded-full transition-all duration-700"
                               style={{
-                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%)',
-                                border: '1px solid rgba(212, 175, 55, 0.3)',
-                                color: '#D4AF37'
+                                width: `${priceRatio * 100}%`,
+                                background: isMVP 
+                                  ? 'linear-gradient(90deg, #D4AF37, #F0D770)' 
+                                  : `linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,${0.04 + priceRatio * 0.12}))`,
+                                boxShadow: isMVP ? '0 0 10px rgba(212,175,55,0.3)' : 'none'
                               }}
-                            >
-                              {index + 1}
-                            </div>
+                            />
 
-                            {/* Player Avatar */}
-                            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0"
-                              style={{
-                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%)',
-                                border: '1px solid rgba(212, 175, 55, 0.2)'
-                              }}
-                            >
-                              {player.photoUrl ? (
-                                <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xl font-extralight" style={{ color: '#D4AF37' }}>
-                                  {player.name.charAt(0)}
+                            <div className="relative flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
+                              {/* Rank */}
+                              <div className="flex-shrink-0 w-7 text-center">
+                                {isMVP ? (
+                                  <span className="text-sm" style={{ color: '#D4AF37' }}>★</span>
+                                ) : (
+                                  <span className="text-sm font-medium text-white/15">{index + 1}</span>
+                                )}
+                              </div>
+
+                              {/* Player Photo */}
+                              <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden flex-shrink-0"
+                                style={{
+                                  background: isMVP 
+                                    ? 'linear-gradient(145deg, #1a1a2e, #16213e)' 
+                                    : 'linear-gradient(145deg, #141414, #1a1a1a)',
+                                  boxShadow: isMVP ? '0 4px 20px rgba(0,0,0,0.5), 0 0 15px rgba(212,175,55,0.08)' : '0 4px 12px rgba(0,0,0,0.3)',
+                                  border: `1px solid ${isMVP ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.05)'}`
+                                }}
+                              >
+                                {player.photoUrl ? (
+                                  <img src={player.photoUrl} alt={player.name} loading="lazy" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <span className="text-lg font-extralight text-white/20">
+                                      {player.name.charAt(0)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Player Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h3 className={`text-sm sm:text-[15px] font-semibold truncate ${isMVP ? 'text-amber-50' : 'text-white/80'}`}>
+                                    {player.name}
+                                  </h3>
+                                  {isMVP && (
+                                    <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                                      style={{ background: 'rgba(212,175,55,0.15)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.2)' }}
+                                    >
+                                      MVP
+                                    </span>
+                                  )}
+                                </div>
+                                {(() => {
+                                  const highPriorityField = enabledFields.find(f => f.isHighPriority);
+                                  const p = player as any;
+                                  let displayValue = '';
+                                  if (highPriorityField) {
+                                    const val = p[highPriorityField.fieldName] || (p.customFields && p.customFields[highPriorityField.fieldName]);
+                                    if (val) displayValue = String(val);
+                                  }
+                                  if (!displayValue && enabledFields.length > 0) {
+                                    for (const field of enabledFields) {
+                                      const val = p[field.fieldName] || (p.customFields && p.customFields[field.fieldName]);
+                                      if (val) { displayValue = String(val); break; }
+                                    }
+                                  }
+                                  return displayValue ? (
+                                    <p className="text-[11px] text-white/25 mt-0.5 truncate">{displayValue}</p>
+                                  ) : null;
+                                })()}
+                              </div>
+
+                              {/* Price */}
+                              <div className="flex-shrink-0 text-right">
+                                <span className={`text-sm sm:text-base font-bold tracking-tight ${isMVP ? '' : 'text-white/60'}`}
+                                  style={isMVP ? { color: '#D4AF37' } : {}}
+                                >
+                                  {formatCurrency(player.soldAmount || 0)}
+                                </span>
+                              </div>
+
+                              {/* Actions */}
+                              {isAuctioneer && (
+                                <div className="flex-shrink-0 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 ml-1">
+                                  <button
+                                    onClick={() => handleSetPlayerToChangeTeam(player)}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+                                    style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.15)' }}
+                                    title="Change Team"
+                                  >
+                                    <svg className="w-3.5 h-3.5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleSetPlayerToDelete(player)}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+                                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.15)' }}
+                                    title="Remove from Team"
+                                  >
+                                    <svg className="w-3.5 h-3.5 text-red-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
                                 </div>
                               )}
                             </div>
-
-                            {/* Player Info */}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-base font-semibold text-white truncate">{player.name}</h3>
-                              {(() => {
-                                // Get high priority field value or first enabled field
-                                const highPriorityField = enabledFields.find(f => f.isHighPriority);
-                                const p = player as any;
-                                let displayValue = '';
-                                if (highPriorityField) {
-                                  const val = p[highPriorityField.fieldName] || (p.customFields && p.customFields[highPriorityField.fieldName]);
-                                  if (val) displayValue = String(val);
-                                }
-                                if (!displayValue && enabledFields.length > 0) {
-                                  for (const field of enabledFields) {
-                                    const val = p[field.fieldName] || (p.customFields && p.customFields[field.fieldName]);
-                                    if (val) { displayValue = String(val); break; }
-                                  }
-                                }
-                                return displayValue ? (
-                                  <p className={`text-xs mt-0.5 ${highPriorityField ? 'text-amber-400 font-medium' : 'text-gray-500'}`}>{displayValue}</p>
-                                ) : null;
-                              })()}
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <span className="text-lg font-medium" style={{ color: '#D4AF37' }}>
-                                  ₹{((player.soldAmount || 0) / 1000).toFixed(0)}K
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Actions */}
-                            {isAuctioneer && (
-                              <div className="flex flex-col gap-1.5">
-                                <button
-                                  onClick={() => handleSetPlayerToChangeTeam(player)}
-                                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
-                                  style={{
-                                    background: 'rgba(59, 130, 246, 0.1)',
-                                    border: '1px solid rgba(59, 130, 246, 0.2)'
-                                  }}
-                                  title="Change Team"
-                                >
-                                  <svg className="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={() => handleSetPlayerToDelete(player)}
-                                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
-                                  style={{
-                                    background: 'rgba(239, 68, 68, 0.1)',
-                                    border: '1px solid rgba(239, 68, 68, 0.2)'
-                                  }}
-                                  title="Remove from Team"
-                                >
-                                  <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                </button>
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 );
               })()}
+              </div>
             </div>
-
-            {/* Bottom Accent */}
-            <div className="absolute bottom-0 left-0 right-0 h-[1px]"
-              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.2) 50%, transparent 100%)' }}
-            />
           </div>
         </div>
       )}
@@ -740,7 +1012,7 @@ const ResultsPage: React.FC = () => {
                         {playerToChangeTeam.class}
                       </p>
                     )}
-                    <p className="text-[10px] sm:text-xs text-blue-400 font-bold">{playerToChangeTeam.position} • ₹{(playerToChangeTeam.soldAmount! / 1000).toFixed(1)}K</p>
+                    <p className="text-[10px] sm:text-xs text-blue-400 font-bold">{playerToChangeTeam.position} • {formatCurrency(playerToChangeTeam.soldAmount!)}</p>
                   </div>
                 </div>
               </div>
@@ -802,7 +1074,7 @@ const ResultsPage: React.FC = () => {
                               <span className={`font-bold ${
                                 canAfford ? 'text-emerald-400' : 'text-red-400'
                               }`}>
-                                ₹{((team.remainingBudget || 0) / 1000).toFixed(1)}K
+                                {formatCurrency(team.remainingBudget || 0)}
                               </span>
                             </div>
                             <div className="flex justify-between text-xs">
@@ -833,7 +1105,7 @@ const ResultsPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>
-                    Player will be moved to the selected team. The sold amount (₹{(playerToChangeTeam.soldAmount! / 1000).toFixed(1)}K) will be deducted from new team's budget and refunded to current team.
+                    Player will be moved to the selected team. The sold amount ({formatCurrency(playerToChangeTeam.soldAmount!)}) will be deducted from new team's budget and refunded to current team.
                   </span>
                 </p>
               </div>
@@ -916,7 +1188,7 @@ const ResultsPage: React.FC = () => {
                         {playerToDelete.class}
                       </p>
                     )}
-                    <p className="text-[10px] sm:text-xs text-red-400 font-bold">{playerToDelete.position} • ₹{(playerToDelete.soldAmount! / 1000).toFixed(1)}K</p>
+                    <p className="text-[10px] sm:text-xs text-red-400 font-bold">{playerToDelete.position} • {formatCurrency(playerToDelete.soldAmount!)}</p>
                   </div>
                 </div>
               </div>
@@ -926,7 +1198,7 @@ const ResultsPage: React.FC = () => {
               </p>
               <p className="text-gray-400 text-[10px] sm:text-xs">
                 • Player will be marked as <span className="text-amber-400">available</span> again<br/>
-                • Amount <span className="text-emerald-400">₹{(playerToDelete.soldAmount! / 1000).toFixed(1)}K</span> will be refunded to team's budget
+                • Amount <span className="text-emerald-400">{formatCurrency(playerToDelete.soldAmount!)}</span> will be refunded to team's budget
               </p>
             </div>
 

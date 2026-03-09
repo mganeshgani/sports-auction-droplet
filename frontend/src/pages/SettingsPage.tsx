@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useDisplaySettings, MAX_SELECTABLE_ITEMS, getFieldIcon } from '../hooks/useDisplaySettings';
+import ConfirmModal from '../components/ConfirmModal';
 
 interface AppConfig {
   branding: {
@@ -84,9 +85,9 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleReset = async () => {
-    if (!window.confirm('Reset to default settings?')) return;
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  const handleReset = async () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/config`, {
@@ -338,7 +339,7 @@ const SettingsPage: React.FC = () => {
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={handleReset}
+                onClick={() => setShowResetConfirm(true)}
                 disabled={saving}
                 className="group px-4 py-2.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2"
                 style={{
@@ -603,6 +604,18 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={showResetConfirm}
+        title="Reset Settings?"
+        message="This will reset all settings to their defaults. Are you sure?"
+        confirmLabel="Reset"
+        variant="warning"
+        onConfirm={() => {
+          setShowResetConfirm(false);
+          handleReset();
+        }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 };

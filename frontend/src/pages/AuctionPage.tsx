@@ -46,6 +46,8 @@ const AuctionPage: React.FC = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [soldAmount, setSoldAmount] = useState<number>(0);
+  const [bidError, setBidError] = useState<string | null>(null);
+  const [noPlayersMessage, setNoPlayersMessage] = useState<string | null>(null);
   const [availableCount, setAvailableCount] = useState(0);
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -127,11 +129,12 @@ const AuctionPage: React.FC = () => {
     };
 
     socket.on('playerUpdated', (updatedPlayer: Player) => {
-      console.log('Player updated:', updatedPlayer);
-      // Update available count on player updates
-      fetchAvailableCount();
-      // Debounce team fetch
-      debouncedTeamFetch();
+      // Update available count in-place based on status change
+      if (updatedPlayer.status === 'sold' || updatedPlayer.status === 'unsold') {
+        setAvailableCount(prev => Math.max(0, prev - 1));
+      } else if (updatedPlayer.status === 'available') {
+        setAvailableCount(prev => prev + 1);
+      }
     });
 
     socket.on('teamUpdated', (updatedTeam: Team) => {
@@ -188,7 +191,8 @@ const AuctionPage: React.FC = () => {
       const availablePlayers = data.filter((p: Player) => p.status === 'available');
       
       if (availablePlayers.length === 0) {
-        alert('No more available players!');
+        setNoPlayersMessage('No more available players!');
+        setTimeout(() => setNoPlayersMessage(null), 4000);
         setIsSpinning(false);
         return;
       }
@@ -208,9 +212,11 @@ const AuctionPage: React.FC = () => {
 
   const handleSoldClick = useCallback(() => {
     if (!soldAmount) {
-      alert('Please enter sold amount first');
+      setBidError('Please enter a bid amount before selling');
+      setTimeout(() => setBidError(null), 3000);
       return;
     }
+    setBidError(null);
     setShowTeamModal(true);
   }, [soldAmount]);
 
@@ -261,15 +267,15 @@ const AuctionPage: React.FC = () => {
       // Clear cache before API call
       clearCache();
       
-      // Only call player update - it handles team budget deduction automatically
-      await playerService.updatePlayer(currentPlayer._id, {
-        status: 'sold',
-        team: teamId,
-        soldAmount: soldAmount
-      });
+      // Use the atomic assignPlayer endpoint (transactional, recomputes budget from aggregation)
+      const result = await playerService.assignPlayer(currentPlayer._id, teamId, soldAmount);
 
-      // Fetch updates in background to sync with server (non-blocking)
-      fetchTeams();
+      // Update team state with authoritative server-computed data
+      if (result.team) {
+        setTeams(prevTeams =>
+          prevTeams.map(t => t._id === result.team._id ? result.team : t)
+        );
+      }
     } catch (error) {
       console.error('Error assigning player:', error);
       // Revert optimistic update on error
@@ -286,9 +292,7 @@ const AuctionPage: React.FC = () => {
 
     try {
       clearCache();
-      await playerService.updatePlayer(currentPlayer._id, {
-        status: 'unsold'
-      });
+      await playerService.markUnsold(currentPlayer._id);
 
       setShowPlayer(false);
       setCurrentPlayer(null);
@@ -318,7 +322,7 @@ const AuctionPage: React.FC = () => {
             WebkitOverflowScrolling: 'touch'
           }}>
             <div className="flex gap-2" style={{ width: 'max-content' }}>
-              {teams.map((team) => (
+              {[...teams].sort((a, b) => (b.remainingBudget || 0) - (a.remainingBudget || 0)).map((team) => (
                 <div key={team._id} className="w-48 flex-shrink-0">
                   <TeamCard team={team} compact={true} />
                 </div>
@@ -347,7 +351,7 @@ const AuctionPage: React.FC = () => {
               </h2>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 p-2">
-              {teams.map((team) => (
+              {[...teams].sort((a, b) => (b.remainingBudget || 0) - (a.remainingBudget || 0)).map((team) => (
                 <TeamCard key={team._id} team={team} compact={true} />
               ))}
             </div>
@@ -384,6 +388,7 @@ const AuctionPage: React.FC = () => {
                     <img 
                       src="/wings.png" 
                       alt="Premium Golden Wings" 
+                      loading="lazy"
                       className="w-full h-auto object-contain max-w-[160px] sm:max-w-[200px] md:max-w-[240px]"
                       style={{
                         filter: 'drop-shadow(0 4px 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 30px rgba(255, 215, 0, 0.4))'
@@ -503,6 +508,14 @@ const AuctionPage: React.FC = () => {
             </div>
           )}
 
+          {/* No players toast */}
+          {noPlayersMessage && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 px-5 py-3 bg-slate-900/95 border border-amber-500/40 rounded-xl shadow-lg shadow-amber-500/10 animate-[fadeIn_0.2s_ease-out] flex items-center gap-2.5">
+              <span className="text-xl">🏁</span>
+              <span className="text-sm font-semibold text-amber-300">{noPlayersMessage}</span>
+            </div>
+          )}
+
           {isSpinning && (
             <div className="flex items-center justify-center flex-1 overflow-hidden">
               <SpinWheel isSpinning={isSpinning} onSpinComplete={handleSpinComplete} />
@@ -514,12 +527,13 @@ const AuctionPage: React.FC = () => {
               <PlayerCard
                 player={currentPlayer}
                 soldAmount={soldAmount}
-                setSoldAmount={setSoldAmount}
+                setSoldAmount={(v) => { setSoldAmount(v); if (v) setBidError(null); }}
                 handleSoldClick={handleSoldClick}
                 handleUnsoldClick={handleMarkUnsold}
                 loading={false}
                 isAuctioneer={isAuctioneer}
                 enabledFields={enabledFields}
+                bidError={bidError}
               />
               
               <TeamSelectionModal

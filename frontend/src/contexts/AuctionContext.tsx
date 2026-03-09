@@ -71,7 +71,12 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSocket(socketInstance);
 
     return () => {
-      socketInstance.disconnect();
+      // Remove listeners only — do NOT disconnect the shared singleton
+      socketInstance.off('auctionStarted');
+      socketInstance.off('bidUpdate');
+      socketInstance.off('auctionComplete');
+      socketInstance.off('connect');
+      socketInstance.off('disconnect');
     };
   }, []);
 

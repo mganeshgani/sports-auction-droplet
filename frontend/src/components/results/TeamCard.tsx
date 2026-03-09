@@ -1,28 +1,6 @@
 import React from 'react';
 import { Team } from '../../types';
-
-// Enabled field interface
-interface EnabledField {
-  fieldName: string;
-  fieldLabel: string;
-  isHighPriority?: boolean;
-}
-
-// Helper to get field value from player (handles both direct properties and customFields)
-const getPlayerFieldValue = (player: any, fieldName: string): any => {
-  // Check direct property first
-  if (player[fieldName] !== undefined) {
-    return player[fieldName];
-  }
-  // Check customFields
-  if (player.customFields) {
-    if (player.customFields instanceof Map) {
-      return player.customFields.get(fieldName);
-    }
-    return player.customFields[fieldName];
-  }
-  return undefined;
-};
+import { formatCurrency } from '../../utils/formatters';
 
 interface TeamCardProps {
   team: Team;
@@ -36,54 +14,28 @@ interface TeamCardProps {
   onClick: () => void;
   getPositionColor: (position: string) => string;
   getPositionIcon: (position: string) => string;
-  enabledFields?: EnabledField[];
+  enabledFields?: any[];
 }
 
 const TeamCard = React.memo<TeamCardProps>(({
   team,
-  index,
   actualFilledSlots,
   actualRemaining,
   actualSpent,
   budgetUsedPercentage,
   teamPlayers,
   onClick,
-  getPositionColor,
-  getPositionIcon,
-  enabledFields = []
 }) => {
   const budgetPercent = parseFloat(budgetUsedPercentage);
-  
-  // Get the high priority field for display
-  const highPriorityField = enabledFields.find(f => f.isHighPriority);
-  
-  // Get display value for a player
-  const getDisplayValue = (player: any): string => {
-    if (highPriorityField) {
-      const value = getPlayerFieldValue(player, highPriorityField.fieldName);
-      if (value !== undefined && value !== null && value !== '') {
-        return String(value);
-      }
-    }
-    // Fallback to first enabled field with a value
-    for (const field of enabledFields) {
-      const value = getPlayerFieldValue(player, field.fieldName);
-      if (value !== undefined && value !== null && value !== '') {
-        return String(value);
-      }
-    }
-    // Final fallback to position
-    return player.position || '';
-  };
   
   return (
     <div
       onClick={onClick}
-      className="group relative cursor-pointer"
+      className="group relative cursor-pointer h-full"
       style={{ maxHeight: 'calc(100vh - 180px)' }}
     >
       {/* Luxury Card Container */}
-      <div className="relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02]"
+      <div className="relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02] h-full flex flex-col"
         style={{
           background: 'linear-gradient(145deg, #0c0c0c 0%, #1a1a1a 50%, #0f0f0f 100%)',
           border: '1px solid rgba(212, 175, 55, 0.15)',
@@ -112,7 +64,7 @@ const TeamCard = React.memo<TeamCardProps>(({
               }}
             >
               {team.logoUrl ? (
-                <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
+                <img src={team.logoUrl} alt={team.name} loading="lazy" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-xl font-light tracking-tight" style={{ color: '#D4AF37' }}>
                   {team.name.charAt(0)}
@@ -138,19 +90,19 @@ const TeamCard = React.memo<TeamCardProps>(({
         <div className="mx-4 h-[1px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' }} />
 
         {/* Stats Section */}
-        <div className="p-4 pt-3">
+        <div className="p-4 pt-3 flex-1 flex flex-col">
           {/* Budget Display */}
           <div className="flex items-baseline justify-between mb-3">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-0.5">Spent</p>
               <p className="text-2xl font-light tracking-tight" style={{ color: '#D4AF37' }}>
-                ₹{actualSpent >= 100000 ? `${(actualSpent / 100000).toFixed(1)}L` : `${(actualSpent / 1000).toFixed(0)}K`}
+                {formatCurrency(actualSpent)}
               </p>
             </div>
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-0.5">Remaining</p>
-              <p className={`text-lg font-medium ${actualRemaining < (team.budget || 0) * 0.2 ? 'text-red-400' : 'text-emerald-400'}`}>
-                ₹{actualRemaining >= 100000 ? `${(actualRemaining / 100000).toFixed(1)}L` : `${(actualRemaining / 1000).toFixed(0)}K`}
+            <p className={`text-lg font-medium ${(team.budget || 0) === 0 ? 'text-gray-500' : actualRemaining < (team.budget || 0) * 0.2 ? 'text-red-400' : 'text-emerald-400'}`}>
+              {(team.budget || 0) > 0 ? formatCurrency(actualRemaining) : '∞'}
               </p>
             </div>
           </div>
@@ -172,39 +124,24 @@ const TeamCard = React.memo<TeamCardProps>(({
             />
           </div>
 
-          {/* Players List - Minimal */}
-          {teamPlayers.length > 0 ? (
-            <div className="space-y-1.5 max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
-              {teamPlayers.map((player) => {
-                const displayValue = getDisplayValue(player);
-                return (
-                  <div key={player._id}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-200 hover:bg-white/[0.03]"
-                    style={{ background: 'rgba(255,255,255,0.02)' }}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-sm opacity-80">{getPositionIcon(player.position)}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{player.name}</p>
-                        {displayValue && (
-                          <p className={`text-[10px] truncate ${highPriorityField ? 'text-purple-400 font-medium' : 'text-gray-500'}`}>
-                            {displayValue}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-sm font-semibold flex-shrink-0" style={{ color: '#D4AF37' }}>
-                      ₹{((player.soldAmount || 0) / 1000).toFixed(0)}K
-                    </p>
-                  </div>
-                );
-              })}
+          {/* Player Count */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-3xl font-light tracking-tight" style={{ color: teamPlayers.length > 0 ? '#D4AF37' : 'rgba(255,255,255,0.15)' }}>
+                {teamPlayers.length}
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mt-1">
+                {teamPlayers.length === 1 ? 'Player' : 'Players'}
+              </p>
             </div>
-          ) : (
-            <div className="py-6 text-center">
-              <p className="text-xs text-gray-600">No players acquired</p>
-            </div>
-          )}
+          </div>
+
+          {/* Click hint */}
+          <div className="text-center pb-1">
+            <p className="text-[10px] text-gray-600 group-hover:text-gray-400 transition-colors">
+              Tap to view details
+            </p>
+          </div>
         </div>
 
         {/* Bottom Accent */}

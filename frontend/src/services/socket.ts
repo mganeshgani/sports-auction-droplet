@@ -221,13 +221,13 @@ export const initializeSocket = () => {
         const user = JSON.parse(userStr);
         console.log('👤 Parsed user:', user);
         
-        if (user._id || user.userId) {
-          const auctioneerId = user._id || user.userId;
+        const auctioneerId = user._id || user.userId || user.id;
+        if (auctioneerId) {
           console.log(`📤 Emitting joinAuctioneer with ID: ${auctioneerId}`);
           socketInstance.emit('joinAuctioneer', auctioneerId);
           console.log(`✓ Joined auctioneer room: auctioneer_${auctioneerId}`);
         } else {
-          console.error('❌ No user ID found in user object:', user);
+          console.warn('⚠️ No user ID found in user object:', user);
         }
       } catch (error) {
         console.error('❌ Error parsing user data:', error);
@@ -334,7 +334,7 @@ export const getAuctioneerId = (): string | null => {
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
-      return user._id || user.userId || null;
+      return user._id || user.userId || user.id || null;
     } catch (error) {
       console.error('Error parsing user data:', error);
       return null;

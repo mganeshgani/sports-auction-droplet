@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { Team } from '../../types';
+import { formatCurrency } from '../../utils/formatters';
 
 interface TeamCardProps {
   team: Team;
@@ -74,7 +75,7 @@ const TeamCard: React.FC<TeamCardProps> = memo(({ team, compact = false }) => {
               overflow: 'hidden'
             }}>
               {team.logoUrl ? (
-                <img src={team.logoUrl} alt={team.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={team.logoUrl} alt={team.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 team.name.charAt(0).toUpperCase()
               )}
@@ -90,6 +91,8 @@ const TeamCard: React.FC<TeamCardProps> = memo(({ team, compact = false }) => {
               letterSpacing: '0.05em',
               textShadow: '0 2px 8px rgba(176, 139, 79, 0.2)'
             }}>{team.name}</h3>
+            {budgetPercentage > 0 && budgetPercentage < 15 && <span title="Low budget" className="text-[10px] flex-shrink-0">🔥</span>}
+            {slotsPercentage >= 100 && <span className="text-[8px] px-1 py-0.5 rounded bg-red-500/20 text-red-400 font-bold flex-shrink-0">FULL</span>}
           </div>
 
           {/* Stats */}
@@ -111,7 +114,7 @@ const TeamCard: React.FC<TeamCardProps> = memo(({ team, compact = false }) => {
                   fontWeight: 700,
                   color: '#B08B4F'
                 }}>
-                  ₹{team.remainingBudget?.toLocaleString()}
+                  {formatCurrency(team.remainingBudget)}
                 </span>
               </div>
               <div style={{
@@ -239,7 +242,7 @@ const TeamCard: React.FC<TeamCardProps> = memo(({ team, compact = false }) => {
               overflow: 'hidden'
             }}>
               {team.logoUrl ? (
-                <img src={team.logoUrl} alt={team.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={team.logoUrl} alt={team.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <span className="text-xl sm:text-2xl">{team.name.charAt(0).toUpperCase()}</span>
               )}
@@ -285,7 +288,7 @@ const TeamCard: React.FC<TeamCardProps> = memo(({ team, compact = false }) => {
                   fontWeight: 800,
                   color: '#FFFFFF'
                 }}>
-                  ₹{team.budget?.toLocaleString()}
+                  {formatCurrency(team.budget)}
                 </span>
               </div>
             </div>
@@ -313,7 +316,7 @@ const TeamCard: React.FC<TeamCardProps> = memo(({ team, compact = false }) => {
                   color: '#FFD700',
                   textShadow: '0 0 10px rgba(255, 215, 0, 0.3)'
                 }}>
-                  ₹{team.remainingBudget?.toLocaleString()}
+                  {formatCurrency(team.remainingBudget)}
                 </span>
               </div>
               <div style={{

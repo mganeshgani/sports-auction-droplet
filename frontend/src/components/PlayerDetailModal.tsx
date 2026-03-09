@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Player } from '../types';
 import { HIGH_PRIORITY_KEY } from '../hooks/useDisplaySettings';
+import { formatCurrency } from '../utils/formatters';
 
 interface FormField {
   fieldName: string;
@@ -215,6 +216,7 @@ const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({ player, onClose }
                     src={player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`}
                     alt={player.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     crossOrigin="anonymous"
                     referrerPolicy="no-referrer"
                   />
@@ -323,9 +325,7 @@ const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({ player, onClose }
                     <span className="text-xs sm:text-sm text-gray-400 font-medium">Sold Amount</span>
                   </div>
                   <span className="text-xl sm:text-2xl font-bold text-emerald-400">
-                    ₹{player.soldAmount >= 100000 
-                      ? `${(player.soldAmount / 100000).toFixed(1)}L` 
-                      : `${(player.soldAmount / 1000).toFixed(0)}K`}
+                    {formatCurrency(player.soldAmount)}
                   </span>
                 </div>
               </div>

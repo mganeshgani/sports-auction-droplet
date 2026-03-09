@@ -3,143 +3,102 @@ import { Player } from '../../types';
 
 const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
 
-// Enabled field interface
-interface EnabledField {
-  fieldName: string;
-  fieldLabel: string;
-  isHighPriority?: boolean;
-}
-
-// Helper to get field value from player (handles both direct properties and customFields)
-const getPlayerFieldValue = (player: Player, fieldName: string): any => {
-  // Check direct property first
-  if ((player as any)[fieldName] !== undefined) {
-    return (player as any)[fieldName];
-  }
-  // Check customFields
-  if (player.customFields) {
-    return player.customFields[fieldName];
-  }
-  return undefined;
-};
-
 interface UnsoldPlayerCardProps {
   player: Player;
   isAuctioneer: boolean;
   onAuction: (player: Player) => void;
-  enabledFields?: EnabledField[];
+  enabledFields?: any[];
 }
 
-const UnsoldPlayerCard = React.memo<UnsoldPlayerCardProps>(({ player, isAuctioneer, onAuction, enabledFields = [] }) => {
-  // Get fields to display (max 2)
-  const fieldsToShow = enabledFields
-    .map(field => ({
-      ...field,
-      value: getPlayerFieldValue(player, field.fieldName)
-    }))
-    .filter(f => f.value !== undefined && f.value !== null && f.value !== '')
-    .slice(0, 2);
-
+const UnsoldPlayerCard = React.memo<UnsoldPlayerCardProps>(({ player, isAuctioneer, onAuction }) => {
   return (
-    <div
-      className="group relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-3 sm:p-4 shadow-lg border border-gray-700/50 hover:border-red-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/10 hover:scale-[1.02]"
-    >
-      {/* Unsold Badge - Top Right */}
-      <div className="absolute top-2 sm:top-3 right-2 sm:right-3 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold bg-red-500/20 border-red-500/30 text-red-400 border flex items-center gap-1">
-        <span>🚫</span>
-        <span className="uppercase">Unsold</span>
-      </div>
-
-      {/* Player Photo */}
-      <div className="flex justify-center mb-2 sm:mb-3">
-        {player.photoUrl && player.photoUrl.trim() !== '' ? (
-          <img 
-            src={player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`} 
-            alt={player.name}
-            crossOrigin="anonymous"
-            referrerPolicy="no-referrer"
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-gray-700 group-hover:border-red-500 transition-all duration-300 group-hover:scale-110"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              target.parentElement!.innerHTML = `<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-2xl sm:text-3xl font-black text-white border-4 border-gray-700 group-hover:border-red-500 transition-all duration-300 group-hover:scale-110">${player.name.charAt(0)}</div>`;
-            }}
-          />
-        ) : (
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-2xl sm:text-3xl font-black text-white border-4 border-gray-700 group-hover:border-red-500 transition-all duration-300 group-hover:scale-110">
-            {player.name.charAt(0)}
-          </div>
-        )}
-      </div>
-
-      {/* Player Info */}
-      <div className="text-center mb-2 sm:mb-3">
-        <h3 className="text-base sm:text-lg font-black text-white truncate group-hover:text-red-400 transition-colors">
-          {player.name}
-        </h3>
-        {player.regNo && (
-          <p className="text-[10px] sm:text-xs text-gray-500 font-mono">{player.regNo}</p>
-        )}
-      </div>
-
-      {/* Dynamic Player Details */}
-      <div className="space-y-1.5 sm:space-y-2">
-        {fieldsToShow.length > 0 ? (
-          fieldsToShow.map((field) => (
-            <div 
-              key={field.fieldName}
-              className={`flex items-center justify-between rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border transition-all ${
-                field.isHighPriority 
-                  ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30' 
-                  : 'bg-gray-900/50 border-gray-700/30'
-              }`}
+    <div className="group relative">
+      <div
+        className="relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1"
+        style={{
+          background: '#0a0a0a',
+          boxShadow: '0 8px 40px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.06)',
+        }}
+        onClick={() => isAuctioneer ? onAuction(player) : undefined}
+      >
+        {/* Full-bleed Photo Area */}
+        <div className="relative w-full aspect-[3/4] overflow-hidden">
+          {/* Photo or Gradient Placeholder */}
+          {player.photoUrl && player.photoUrl.trim() !== '' ? (
+            <img
+              src={player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`}
+              alt={player.name}
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
+          ) : null}
+          
+          {/* Fallback Initial */}
+          {(!player.photoUrl || player.photoUrl.trim() === '') && (
+            <div className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
             >
-              <span className={`text-[10px] sm:text-xs uppercase tracking-wider ${
-                field.isHighPriority ? 'text-amber-400' : 'text-gray-400'
-              }`}>
-                {field.fieldLabel}
-              </span>
-              <span className={`text-[10px] sm:text-xs font-bold truncate ml-2 ${
-                field.isHighPriority ? 'text-amber-200' : 'text-white'
-              }`}>
-                {String(field.value)}
+              <span className="text-5xl font-extralight tracking-tight text-white/30">
+                {player.name.charAt(0).toUpperCase()}
               </span>
             </div>
-          ))
-        ) : (
-          // Fallback to hardcoded fields if no enabled fields configured
-          <>
-            {player.class && (
-              <div className="flex items-center justify-between bg-gray-900/50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-700/30">
-                <span className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider">Class</span>
-                <span className="text-[10px] sm:text-xs font-bold text-white truncate ml-2">{player.class}</span>
-              </div>
-            )}
-            {player.position && (
-              <div className="flex items-center justify-between bg-gray-900/50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-700/30">
-                <span className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider">Position</span>
-                <span className="text-[10px] sm:text-xs font-bold text-white truncate ml-2">{player.position}</span>
-              </div>
-            )}
-          </>
-        )}
+          )}
 
-        {/* Auction Button - Only for Auctioneers */}
-        {isAuctioneer ? (
-        <button
-          onClick={() => onAuction(player)}
-          className="w-full mt-1.5 sm:mt-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center gap-1.5 sm:gap-2"
-        >
-          <span>Auction Now</span>
-        </button>
-        ) : (
-          <div className="w-full mt-1.5 sm:mt-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-center" style={{
-            background: 'rgba(100, 100, 100, 0.2)',
-            border: '1px solid rgba(150, 150, 150, 0.3)'
-          }}>
-            <p className="text-gray-400 text-[10px] sm:text-xs">🔒 Viewer Mode</p>
+          {/* Cinematic Bottom Gradient */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.0) 55%, rgba(0,0,0,0.15) 100%)'
+          }} />
+
+          {/* Top-left: Unsold Badge */}
+          <div className="absolute top-2.5 left-2.5">
+            <div className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider backdrop-blur-md"
+              style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                color: '#fca5a5',
+              }}
+            >
+              unsold
+            </div>
+          </div>
+
+          {/* Bottom Info Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 pb-3.5">
+            <h3 className="text-[15px] font-bold text-white truncate leading-tight tracking-tight drop-shadow-lg">
+              {player.name}
+            </h3>
+            <p className="text-[11px] text-gray-400 font-medium mt-1">
+              {isAuctioneer ? 'Tap to auction' : 'Awaiting auction'}
+            </p>
+          </div>
+        </div>
+
+        {/* Auctioneer: Auction button on hover */}
+        {isAuctioneer && (
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 z-10">
+            <button
+              onClick={(e) => { e.stopPropagation(); onAuction(player); }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+              style={{ background: 'rgba(16, 185, 129, 0.2)', backdropFilter: 'blur(12px)', border: '1px solid rgba(16,185,129,0.3)' }}
+              title="Auction Now"
+            >
+              <svg className="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
           </div>
         )}
+
+        {/* Hover border glow */}
+        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          style={{ boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.15), 0 0 30px rgba(212, 175, 55, 0.12)' }}
+        />
       </div>
     </div>
   );

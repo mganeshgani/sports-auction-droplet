@@ -2,6 +2,84 @@ const Player = require('../models/player.model');
 const Team = require('../models/team.model');
 const User = require('../models/user.model');
 const cloudinary = require('../config/cloudinary');
+const mongoose = require('mongoose');
+
+// Generate next regNo using MongoDB aggregation (O(1) instead of O(N))
+async function generateRegNo(auctioneerId) {
+  const result = await Player.aggregate([
+    { $match: { auctioneer: auctioneerId, regNo: { $regex: /^P\d+$/ } } },
+    {
+      $project: {
+        numericPart: {
+          $toInt: { $substr: ['$regNo', 1, -1] }
+        }
+      }
+    },
+    { $group: { _id: null, maxNum: { $max: '$numericPart' } } }
+  ]);
+
+  const maxNum = result[0]?.maxNum || 0;
+  return `P${String(maxNum + 1).padStart(4, '0')}`;
+}
+
+// Pre-upload a photo to Cloudinary (authenticated)
+exports.uploadPhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No photo file provided' });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'auction-players',
+          public_id: `player_upload_${Date.now()}`,
+          resource_type: 'image',
+          transformation: [
+            { width: 600, height: 600, crop: 'limit', quality: 'auto:good', fetch_format: 'webp' }
+          ]
+        },
+        (error, result) => error ? reject(error) : resolve(result)
+      );
+      stream.end(req.file.buffer);
+    });
+
+    res.json({ url: result.secure_url });
+  } catch (error) {
+    console.error('Photo upload error:', error.message);
+    res.status(500).json({ error: 'Photo upload failed' });
+  }
+};
+
+// Pre-upload a photo to Cloudinary (public — no auth)
+exports.uploadPhotoPublic = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No photo file provided' });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'auction-players',
+          public_id: `player_upload_${Date.now()}`,
+          resource_type: 'image',
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+            { quality: 'auto:good', fetch_format: 'webp' }
+          ]
+        },
+        (error, result) => error ? reject(error) : resolve(result)
+      );
+      stream.end(req.file.buffer);
+    });
+
+    res.json({ url: result.secure_url });
+  } catch (error) {
+    console.error('Photo upload error:', error.message);
+    res.status(500).json({ error: 'Photo upload failed' });
+  }
+};
 
 // Register a new player with photo (via registration link)
 exports.registerPlayer = async (req, res) => {
@@ -23,16 +101,12 @@ exports.registerPlayer = async (req, res) => {
       });
     }
 
-    // Check if registration number already exists for this auctioneer (only if provided)
-    if (regNo) {
-      const existingPlayer = await Player.findOne({ 
-        regNo, 
-        auctioneer: auctioneer._id 
-      });
-      
-      if (existingPlayer) {
-        return res.status(400).json({ 
-          error: 'A player with this registration number already exists for this auction' 
+    // Check if auctioneer has reached their player limit
+    if (auctioneer.limits && auctioneer.limits.maxPlayers != null) {
+      const currentPlayerCount = await Player.countDocuments({ auctioneer: auctioneer._id });
+      if (currentPlayerCount >= auctioneer.limits.maxPlayers) {
+        return res.status(400).json({
+          error: 'Registration limit reached. Please contact the organizer.'
         });
       }
     }
@@ -40,68 +114,27 @@ exports.registerPlayer = async (req, res) => {
     // Separate core fields from custom fields (do this first while upload happens)
     const { class: playerClass, position } = customFieldsData;
     
-    // Build custom fields map (exclude core fields)
+    // Build custom fields map (exclude core fields and photoUrl)
     const customFields = new Map();
     Object.keys(customFieldsData).forEach(key => {
-      if (!['class', 'position', 'photo'].includes(key)) {
+      if (!['class', 'position', 'photo', 'photoUrl'].includes(key)) {
         customFields.set(key, customFieldsData[key]);
       }
     });
 
-    // Auto-generate regNo if not provided
-    let finalRegNo = regNo;
-    
-    if (!finalRegNo) {
-      // Find all players for this auctioneer
-      const allPlayers = await Player.find({ 
-        auctioneer: auctioneer._id
-      })
-      .select('regNo')
-      .lean();
+    // Use provided regNo or auto-generate (no uniqueness check — regNo is display metadata)
+    const finalRegNo = regNo || await generateRegNo(auctioneer._id);
 
-      let maxNumber = 0;
-      
-      // Extract all numbers from regNo
-      allPlayers.forEach(p => {
-        if (p.regNo) {
-          const match = p.regNo.match(/\d+/);
-          if (match) {
-            const num = parseInt(match[0]);
-            if (!isNaN(num) && num > maxNumber) {
-              maxNumber = num;
-            }
-          }
-        }
-      });
-      
-      finalRegNo = `P${String(maxNumber + 1).padStart(4, '0')}`;
-      console.log(`✓ Registration form - Generated regNo: ${finalRegNo} (${allPlayers.length} players, max: ${maxNumber})`);
+    // Use pre-uploaded photoUrl if provided, otherwise handle file upload
+    const { photoUrl: preUploadedUrl } = customFieldsData;
+    let finalPhotoUrl = preUploadedUrl || '';
+    let pendingUpload = false;
+
+    if (!finalPhotoUrl && req.file) {
+      // File was sent directly — use placeholder, upload in background
+      finalPhotoUrl = 'https://placehold.co/400x400/e2e8f0/64748b?text=Photo+Uploading';
+      pendingUpload = true;
     }
-
-    // Upload photo to Cloudinary (OPTIMIZED - async transformations)
-    let photoUrl = '';
-    const uploadPromise = req.file ? new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'auction-players',
-          public_id: `player_${regNo || 'temp'}_${Date.now()}`,
-          resource_type: 'image',
-          transformation: [
-            { width: 600, height: 600, crop: 'limit', quality: 'auto:good', fetch_format: 'webp' }
-          ],
-          eager_async: true, // Process async - don't wait
-          invalidate: false // Faster upload
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result.secure_url);
-        }
-      );
-      uploadStream.end(req.file.buffer);
-    }) : Promise.resolve('');
-
-    // Wait for upload to complete
-    photoUrl = await uploadPromise;
 
     // Create new player linked to auctioneer
     const player = new Player({
@@ -109,7 +142,7 @@ exports.registerPlayer = async (req, res) => {
       regNo: finalRegNo,
       class: playerClass || 'N/A',
       position: position || 'N/A',
-      photoUrl,
+      photoUrl: finalPhotoUrl,
       customFields,
       status: 'available',
       auctioneer: auctioneer._id
@@ -122,11 +155,39 @@ exports.registerPlayer = async (req, res) => {
       req.app.get('io').to(`auctioneer_${auctioneer._id}`).emit('playerAdded', player);
     }
 
+    // Return success immediately — don't make user wait for Cloudinary
     res.status(201).json({
       message: 'Player registered successfully',
       player,
       auctioneerName: auctioneer.name
     });
+
+    // Upload image in background AFTER response is sent (only if not pre-uploaded)
+    if (pendingUpload && req.file) {
+      const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
+      (async () => {
+        try {
+          const result = await uploadToCloudinary(req.file.buffer, {
+            folder: 'auction-players',
+            public_id: `player_${finalRegNo}_${Date.now()}`,
+            resource_type: 'image',
+            transformation: [
+              { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+              { quality: 'auto:good', fetch_format: 'webp' }
+            ]
+          });
+          player.photoUrl = result.secure_url;
+          await player.save();
+
+          // Notify connected clients of the updated photo
+          if (req.app.get('io')) {
+            req.app.get('io').to(`auctioneer_${auctioneer._id}`).emit('playerUpdated', player.toObject());
+          }
+        } catch (uploadErr) {
+          console.error('Background upload failed for player', player._id, uploadErr.message);
+        }
+      })().catch(err => console.error('Unhandled upload error:', err.message));
+    }
 
   } catch (error) {
     console.error('Error registering player:', error);
@@ -160,60 +221,92 @@ exports.getRandomPlayer = async (req, res) => {
   }
 };
 
-// Assign player to team - OPTIMIZED with parallel queries
+// Assign player to team - ATOMIC with MongoDB transaction
 exports.assignPlayer = async (req, res) => {
+  const playerId = req.params.playerId;
+  const { teamId, amount } = req.body;
+
+  if (!playerId) return res.status(400).json({ error: 'Player ID is required' });
+  if (!teamId) return res.status(400).json({ error: 'Team ID is required' });
+  if (!amount || amount < 0) return res.status(400).json({ error: 'Valid bid amount is required' });
+
+  const session = await mongoose.startSession();
+
   try {
-    const { playerId, teamId, amount } = req.body;
-    
-    // OPTIMIZED: Fetch player and team in parallel
-    const [player, team] = await Promise.all([
-      Player.findOne({ _id: playerId, auctioneer: req.user._id }),
-      Team.findOne({ _id: teamId, auctioneer: req.user._id })
-    ]);
-    
-    if (!player) {
-      return res.status(404).json({ error: 'Player not found or access denied' });
-    }
-    if (!team) {
-      return res.status(404).json({ error: 'Team not found or access denied' });
-    }
+    let result;
 
-    // Check if team has available slots
-    if (!team.canAddPlayer()) {
-      return res.status(400).json({ error: 'Team has no available slots' });
-    }
+    await session.withTransaction(async () => {
+      // Fetch both documents within the transaction
+      const player = await Player.findOne({ _id: playerId, auctioneer: req.user._id }).session(session);
+      const team = await Team.findOne({ _id: teamId, auctioneer: req.user._id }).session(session);
 
-    // Check if team has enough budget
-    if (!team.hasEnoughBudget(amount)) {
-      return res.status(400).json({ error: 'Team does not have enough budget' });
-    }
+      if (!player) throw new Error('Player not found');
+      if (!team) throw new Error('Team not found');
+      if (player.status !== 'available') throw new Error('Player is not available for sale');
 
-    // Update player
-    player.status = 'sold';
-    player.team = teamId;
-    player.soldAmount = amount;
+      // Compute live slot count (array length is the truth)
+      const filledSlots = team.players.length;
+      if (filledSlots >= team.totalSlots) {
+        throw new Error(`Team "${team.name}" has no remaining slots (${filledSlots}/${team.totalSlots})`);
+      }
 
-    // Update team
-    team.players.push(playerId);
-    team.filledSlots += 1;
-    if (team.budget !== null) {
-      team.remainingBudget -= amount;
-    }
-    
-    // OPTIMIZED: Save both in parallel
-    await Promise.all([player.save(), team.save()]);
+      // Compute live remaining budget from actual sold amounts
+      if (team.budget) {
+        const budgetUsed = await Player.aggregate([
+          { $match: { team: team._id, status: 'sold' } },
+          { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+        ]).session(session);
+        const totalSpent = budgetUsed[0]?.total || 0;
+        const remainingBudget = (team.budget || 0) - totalSpent;
 
-    // Emit socket events only to this auctioneer's room
+        if (amount > remainingBudget) {
+          throw new Error(`Insufficient budget. Team "${team.name}" has ₹${remainingBudget} remaining, bid is ₹${amount}`);
+        }
+      }
+
+      // Apply changes
+      player.status = 'sold';
+      player.team = team._id;
+      player.soldAmount = amount;
+
+      team.players.push(player._id);
+      team.filledSlots = team.players.length;
+
+      // Recompute stored remainingBudget for read convenience
+      if (team.budget) {
+        const budgetUsedAfter = await Player.aggregate([
+          { $match: { team: team._id, status: 'sold', _id: { $ne: player._id } } },
+          { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+        ]).session(session);
+        const totalSpentBefore = budgetUsedAfter[0]?.total || 0;
+        team.remainingBudget = team.budget - totalSpentBefore - amount;
+      }
+
+      await player.save({ session });
+      await team.save({ session });
+
+      result = { player, team };
+    });
+
+    // Broadcast via Socket.io
     const io = req.app.get('io');
     if (io) {
       const room = `auctioneer_${req.user._id}`;
-      io.to(room).emit('playerSold', player);
-      io.to(room).emit('teamUpdated', team);
+      io.to(room).emit('playerSold', result.player);
+      io.to(room).emit('teamUpdated', result.team);
     }
 
-    res.json({ message: 'Player assigned successfully', player, team });
-  } catch (error) {
-    res.status(500).json({ error: 'Error assigning player' });
+    res.json({ message: 'Player assigned successfully', player: result.player, team: result.team });
+  } catch (err) {
+    const userMessage = err.message.includes('no remaining slots') ||
+                        err.message.includes('Insufficient budget') ||
+                        err.message.includes('not available') ||
+                        err.message.includes('not found')
+      ? err.message
+      : 'Failed to assign player. Please try again.';
+    return res.status(400).json({ error: userMessage });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -265,18 +358,48 @@ exports.getUnsoldPlayers = async (req, res) => {
   }
 };
 
-// Get all players - OPTIMIZED
+// Get all players - with optional pagination
 exports.getAllPlayers = async (req, res) => {
   try {
-    // Filter players by the logged-in auctioneer
-    // OPTIMIZED: Use lean() for plain JS objects (2-5x faster)
-    // OPTIMIZED: Only populate necessary team fields
-    const players = await Player.find({ auctioneer: req.user._id })
+    const { page, limit = 50, status, search } = req.query;
+    const query = { auctioneer: req.user._id };
+    if (status) query.status = status;
+    if (search) query.name = { $regex: search, $options: 'i' };
+
+    // If page param is provided, return paginated response
+    if (page) {
+      const pageNum = parseInt(page);
+      const limitNum = Math.min(parseInt(limit), 100);
+      const skip = (pageNum - 1) * limitNum;
+
+      const [players, total] = await Promise.all([
+        Player.find(query)
+          .populate('team', 'name')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limitNum)
+          .lean(),
+        Player.countDocuments(query)
+      ]);
+
+      return res.json({
+        players,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          hasMore: skip + players.length < total
+        }
+      });
+    }
+
+    // Default: return all players (backward compatible)
+    const players = await Player.find(query)
       .populate('team', 'name')
-      .sort({ createdAt: -1 }) // Newest first
+      .sort({ createdAt: -1 })
       .lean();
     
-    // Set cache headers for better performance
     res.set('Cache-Control', 'private, max-age=5');
     res.json(players);
   } catch (error) {
@@ -308,90 +431,69 @@ exports.deleteAllPlayers = async (req, res) => {
   }
 };
 
-// Remove player from team
+// Remove player from team - ATOMIC with MongoDB transaction
 exports.removePlayerFromTeam = async (req, res) => {
+  const { playerId } = req.params;
+  const session = await mongoose.startSession();
+
   try {
-    const { playerId } = req.params;
-    
-    // Verify player belongs to this auctioneer
-    const player = await Player.findOne({ _id: playerId, auctioneer: req.user._id });
-    
-    if (!player) {
-      return res.status(404).json({ error: 'Player not found or access denied' });
-    }
+    let resultPlayer, resultTeam;
 
-    console.log('Remove player from team - Player data:', {
-      id: player._id,
-      name: player.name,
-      team: player.team,
-      status: player.status,
-      soldAmount: player.soldAmount
-    });
+    await session.withTransaction(async () => {
+      // Verify player belongs to this auctioneer
+      const player = await Player.findOne({ _id: playerId, auctioneer: req.user._id }).session(session);
+      if (!player) throw new Error('Player not found or access denied');
 
-    let teamId = player.team;
-    let soldAmount = player.soldAmount || 0;
-    let team = null;
-
-    // If player has a team field, use it
-    if (teamId) {
-      team = await Team.findOne({ _id: teamId, auctioneer: req.user._id });
-    } else {
-      // Data inconsistency: player.team is null but player might be in a team's array
-      // Search all teams to find which one has this player
-      console.log('Player team field is null - searching all teams for this player');
-      team = await Team.findOne({ 
-        auctioneer: req.user._id,
-        players: playerId 
-      });
-      
-      if (!team) {
-        return res.status(400).json({ error: 'Player is not assigned to any team' });
+      // Find the team — either from player.team or by searching teams
+      let team = null;
+      if (player.team) {
+        team = await Team.findOne({ _id: player.team, auctioneer: req.user._id }).session(session);
       }
-      
-      console.log(`Found player in team: ${team.name} (${team._id})`);
-    }
+      if (!team) {
+        team = await Team.findOne({ auctioneer: req.user._id, players: playerId }).session(session);
+      }
+      if (!team) throw new Error('Player is not assigned to any team');
 
-    // Remove player from team's players array and update budget
-    if (team) {
-      // Remove player from team's players array
+      // Remove player from team
       team.players = team.players.filter(p => String(p) !== String(playerId));
       team.filledSlots = team.players.length;
-      
-      // Refund the sold amount to team's budget (only if player was sold)
-      if (player.status === 'sold' && soldAmount > 0) {
-        team.remainingBudget = (team.remainingBudget || 0) + soldAmount;
-      }
-      
-      await team.save();
-      
-      // Emit socket event for team update (only to this auctioneer)
-      const io = req.app.get('io');
-      if (io) {
-        io.to(`auctioneer_${req.user._id}`).emit('teamUpdated', team);
-      }
-    }
 
-    // Update player to available status
-    player.status = 'available';
-    player.team = null;
-    player.soldAmount = null;
-    await player.save();
+      // Recompute remaining budget live
+      if (team.budget) {
+        const budgetUsed = await Player.aggregate([
+          { $match: { team: team._id, status: 'sold', _id: { $ne: player._id } } },
+          { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+        ]).session(session);
+        team.remainingBudget = team.budget - (budgetUsed[0]?.total || 0);
+      }
 
-    // Emit socket events for real-time updates (only to this auctioneer)
+      // Reset player
+      player.status = 'available';
+      player.team = null;
+      player.soldAmount = 0;
+
+      await player.save({ session });
+      await team.save({ session });
+
+      resultPlayer = player;
+      resultTeam = team;
+    });
+
+    // Emit socket events
     const io = req.app.get('io');
     if (io) {
-      io.to(`auctioneer_${req.user._id}`).emit('playerUpdated', player);
-      io.to(`auctioneer_${req.user._id}`).emit('playerRemovedFromTeam', { player, team });
+      const room = `auctioneer_${req.user._id}`;
+      io.to(room).emit('playerUpdated', resultPlayer);
+      io.to(room).emit('teamUpdated', resultTeam);
+      io.to(room).emit('playerRemovedFromTeam', { player: resultPlayer, team: resultTeam });
     }
 
-    res.json({ 
-      message: 'Player removed from team successfully', 
-      player,
-      team 
-    });
-  } catch (error) {
-    console.error('Error removing player from team:', error);
-    res.status(500).json({ error: 'Error removing player from team' });
+    res.json({ message: 'Player removed from team successfully', player: resultPlayer, team: resultTeam });
+  } catch (err) {
+    const status = err.message.includes('not found') || err.message.includes('not assigned') ? 404 : 500;
+    return res.status(status).json({ error: err.message || 'Error removing player from team' });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -464,7 +566,14 @@ exports.updatePlayer = async (req, res) => {
         if (team) {
           team.players = team.players.filter(p => String(p) !== String(playerId));
           team.filledSlots = team.players.length;
-          team.remainingBudget = (team.remainingBudget || 0) + oldSoldAmount;
+          // Recompute budget from aggregation (source of truth)
+          if (team.budget) {
+            const budgetUsed = await Player.aggregate([
+              { $match: { team: team._id, status: 'sold', _id: { $ne: player._id } } },
+              { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+            ]);
+            team.remainingBudget = team.budget - (budgetUsed[0]?.total || 0);
+          }
           await team.save();
           
           const io = req.app.get('io');
@@ -485,8 +594,14 @@ exports.updatePlayer = async (req, res) => {
         if (oldTeamDoc) {
           oldTeamDoc.players = oldTeamDoc.players.filter(p => String(p) !== String(playerId));
           oldTeamDoc.filledSlots = oldTeamDoc.players.length;
-          // Refund old amount to old team
-          oldTeamDoc.remainingBudget = (oldTeamDoc.remainingBudget || 0) + oldSoldAmount;
+          // Recompute budget from aggregation (source of truth)
+          if (oldTeamDoc.budget) {
+            const budgetUsed = await Player.aggregate([
+              { $match: { team: oldTeamDoc._id, status: 'sold', _id: { $ne: player._id } } },
+              { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+            ]);
+            oldTeamDoc.remainingBudget = oldTeamDoc.budget - (budgetUsed[0]?.total || 0);
+          }
           await oldTeamDoc.save();
           
           const io = req.app.get('io');
@@ -509,12 +624,13 @@ exports.updatePlayer = async (req, res) => {
         team.filledSlots = team.players.length;
       }
       
-      // Deduct soldAmount from new team budget if provided
-      if (updateData.soldAmount && typeof updateData.soldAmount === 'number') {
-        // Only deduct if it's a new assignment or team change
-        if (!oldTeam || teamChanged) {
-          team.remainingBudget = (team.remainingBudget || team.budget) - updateData.soldAmount;
-        }
+      // Recompute budget from aggregation (source of truth) instead of arithmetic on stored value
+      if (team.budget) {
+        const budgetUsed = await Player.aggregate([
+          { $match: { team: team._id, status: 'sold' } },
+          { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+        ]);
+        team.remainingBudget = team.budget - (budgetUsed[0]?.total || 0);
       }
       
       await team.save();
@@ -568,8 +684,14 @@ exports.deletePlayer = async (req, res) => {
         team.players = team.players.filter(p => String(p) !== String(playerId));
         team.filledSlots = team.players.length;
         
-        // Refund the sold amount to team's budget
-        team.remainingBudget = (team.remainingBudget || 0) + soldAmount;
+        // Recompute budget from aggregation (source of truth)
+        if (team.budget) {
+          const budgetUsed = await Player.aggregate([
+            { $match: { team: team._id, status: 'sold', _id: { $ne: player._id } } },
+            { $group: { _id: null, total: { $sum: '$soldAmount' } } }
+          ]);
+          team.remainingBudget = team.budget - (budgetUsed[0]?.total || 0);
+        }
         
         await team.save();
         
@@ -621,78 +743,35 @@ exports.createPlayer = async (req, res) => {
       });
     }
 
-    // Build custom fields from any extra fields sent
+    // Build custom fields from any extra fields sent (exclude photoUrl — it's used below)
     const customFields = new Map();
     Object.keys(otherFields).forEach(key => {
-      if (otherFields[key]) {
+      if (otherFields[key] && key !== 'photoUrl') {
         customFields.set(key, otherFields[key]);
       }
     });
 
-    // Auto-generate regNo if not provided
-    let finalRegNo = regNo;
-    
-    if (!finalRegNo) {
-      // Find all players for this auctioneer
-      const allPlayers = await Player.find({ 
-        auctioneer: req.user._id
-      })
-      .select('regNo')
-      .lean();
+    // Use provided regNo or auto-generate (no uniqueness check — regNo is display metadata)
+    const finalRegNo = regNo || await generateRegNo(req.user._id);
 
-      let maxNumber = 0;
-      
-      // Extract all numbers from regNo (handle any format)
-      allPlayers.forEach(p => {
-        if (p.regNo) {
-          const match = p.regNo.match(/\d+/);
-          if (match) {
-            const num = parseInt(match[0]);
-            if (!isNaN(num) && num > maxNumber) {
-              maxNumber = num;
-            }
-          }
-        }
-      });
-      
-      // Generate next regNo
-      finalRegNo = `P${String(maxNumber + 1).padStart(4, '0')}`;
-      
-      // Double-check it doesn't already exist (extra safety)
-      const existsCheck = await Player.findOne({ 
-        regNo: finalRegNo, 
-        auctioneer: req.user._id 
-      }).lean();
-      
-      if (existsCheck) {
-        // If somehow it still exists, use a guaranteed unique approach
-        const timestamp = Date.now();
-        finalRegNo = `P${String(maxNumber + 1 + (timestamp % 100)).padStart(4, '0')}`;
-        console.log(`⚠️ RegNo collision detected, using: ${finalRegNo}`);
-      } else {
-        console.log(`✓ Generated unique regNo: ${finalRegNo} (${allPlayers.length} players, max: ${maxNumber})`);
-      }
-    } else {
-      // If regNo is provided, check for duplicates
-      const existingPlayer = await Player.findOne({ regNo, auctioneer: req.user._id }).lean();
-      if (existingPlayer) {
-        return res.status(400).json({ 
-          error: 'A player with this registration number already exists' 
-        });
-      }
+    // Use pre-uploaded photoUrl if available, otherwise handle file
+    const preUploadedUrl = otherFields.photoUrl;
+    let photoUrl = preUploadedUrl || '';
+    let pendingUpload = false;
+
+    if (!photoUrl && req.file) {
+      photoUrl = 'https://via.placeholder.com/400x400?text=' + encodeURIComponent(name.charAt(0));
+      pendingUpload = true;
+    } else if (!photoUrl) {
+      photoUrl = '';
     }
-
-    // Create player with temporary placeholder photo (instant)
-    const tempPhotoUrl = req.file 
-      ? 'https://via.placeholder.com/400x400?text=' + encodeURIComponent(name.charAt(0))
-      : 'https://via.placeholder.com/400x400?text=' + encodeURIComponent(name.charAt(0));
 
     const player = new Player({
       name,
       regNo: finalRegNo,
       class: playerClass || 'N/A',
       position: position || 'N/A',
-      photoUrl: tempPhotoUrl,
+      photoUrl,
       customFields,
       auctioneer: req.user._id,
       status: 'available'
@@ -720,8 +799,8 @@ exports.createPlayer = async (req, res) => {
     // Send immediate response
     res.status(201).json(player);
 
-    // Upload photo to Cloudinary in background (async, non-blocking)
-    if (req.file) {
+    // Upload photo to Cloudinary in background only if not pre-uploaded
+    if (pendingUpload && req.file) {
       const auctioneerId = req.user._id;
       const playerId = player._id;
       const playerName = name;
@@ -772,10 +851,10 @@ exports.createPlayer = async (req, res) => {
   } catch (error) {
     console.error('Error creating player:', error);
     
-    // Handle duplicate key error specifically
+    // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({ 
-        error: 'A player with this registration number already exists. Please try again.' 
+        error: 'A duplicate record was detected. Please try again.' 
       });
     }
     

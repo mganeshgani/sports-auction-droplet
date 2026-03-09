@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Player } from '../types';
+import { formatCurrency } from '../utils/formatters';
 import RegistrationLinkGenerator from '../components/RegistrationLinkGenerator';
 import EditPlayerModal from '../components/EditPlayerModal';
 import PlayerDetailModal from '../components/PlayerDetailModal';
 import { useAuth } from '../contexts/AuthContext';
+import ConfirmModal from '../components/ConfirmModal';
 import { playerService, clearCache } from '../services/api';
 import { initializeSocket } from '../services/socket';
-import { useDisplaySettings } from '../hooks/useDisplaySettings';
 
 const PlayersPage: React.FC = () => {
   const { isAuctioneer, user, refreshUser } = useAuth();
@@ -18,23 +20,8 @@ const PlayersPage: React.FC = () => {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
-  
-  // Display settings from shared hook (now dynamic with form builder fields)
-  const { getEnabledFields } = useDisplaySettings();
-  
-  // Memoize enabled fields to avoid unnecessary re-renders
-  const enabledFields = useMemo(() => getEnabledFields(), [getEnabledFields]);
-
-  // Helper function to get player field value (supports both core fields and custom fields)
-  const getPlayerFieldValue = (player: Player, fieldName: string): any => {
-    // Core fields are direct properties
-    if (['name', 'regNo', 'class', 'position', 'photoUrl', 'status', 'soldAmount'].includes(fieldName)) {
-      return (player as any)[fieldName];
-    }
-    // Custom fields from form builder are in customFields
-    return player.customFields?.[fieldName];
-  };
 
   const fetchPlayers = useCallback(async (bypassCache = false) => {
     setLoading(true);
@@ -134,9 +121,6 @@ const PlayersPage: React.FC = () => {
   }, [fetchPlayers, refreshUser]);
 
   const handleDeletePlayer = useCallback(async (playerId: string) => {
-    if (!window.confirm('Are you sure you want to delete this player? This action cannot be undone.')) {
-      return;
-    }
     try {
       const token = localStorage.getItem('token');
       // Optimistic update - remove from UI immediately
@@ -163,6 +147,38 @@ const PlayersPage: React.FC = () => {
       : players.filter(p => p.status === filter),
     [filter, players]
   );
+
+  // Virtualization setup
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(1);
+
+  useEffect(() => {
+    const updateColumns = () => {
+      const w = window.innerWidth;
+      if (w >= 1280) setColumns(5);
+      else if (w >= 1024) setColumns(4);
+      else if (w >= 640) setColumns(3);
+      else setColumns(2);
+    };
+    updateColumns();
+    window.addEventListener('resize', updateColumns);
+    return () => window.removeEventListener('resize', updateColumns);
+  }, []);
+
+  const rows = useMemo(() => {
+    const result: Player[][] = [];
+    for (let i = 0; i < filteredPlayers.length; i += columns) {
+      result.push(filteredPlayers.slice(i, i + columns));
+    }
+    return result;
+  }, [filteredPlayers, columns]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => gridRef.current,
+    estimateSize: () => 280,
+    overscan: 5,
+  });
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -364,185 +380,149 @@ const PlayersPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredPlayers.map((player) => {
+        <div ref={gridRef} className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-5">
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+              <div
+                key={virtualRow.index}
+                data-index={virtualRow.index}
+                ref={rowVirtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-4">
+            {rows[virtualRow.index].map((player) => {
+              const isSold = player.status === 'sold';
+              const isUnsold = player.status === 'unsold';
+              
               return (
                 <div
                   key={player._id}
                   className="group relative"
                 >
-                  {/* Compact Premium Card - Clickable */}
                   <div 
-                    className="relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                    className="relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1"
                     style={{
-                      background: 'linear-gradient(165deg, #0a0a0a 0%, #141414 40%, #0d0d0d 100%)',
-                      border: '1px solid rgba(212, 175, 55, 0.12)',
-                      boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.8)'
+                      background: '#0a0a0a',
+                      boxShadow: '0 8px 40px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.06)',
                     }}
                     onClick={() => setSelectedPlayer(player)}
                   >
-                    {/* Ambient Glow Effect */}
-                    <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-0 group-hover:opacity-30 blur-2xl transition-all duration-500"
-                      style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.5) 0%, transparent 70%)' }}
-                    />
-                    
-                    {/* Top Accent Line */}
-                    <div className="absolute top-0 left-0 right-0 h-[1px]"
-                      style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.4) 50%, transparent 100%)' }}
-                    />
-
-                    {/* Status Badge - Compact */}
-                    <div className="absolute top-2.5 right-2.5 z-10">
-                      <div className="px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide flex items-center gap-1"
-                        style={{
-                          background: player.status === 'sold' 
-                            ? 'rgba(16, 185, 129, 0.15)' 
-                            : player.status === 'unsold' 
-                            ? 'rgba(239, 68, 68, 0.15)' 
-                            : 'rgba(212, 175, 55, 0.15)',
-                          border: `1px solid ${player.status === 'sold' ? 'rgba(16, 185, 129, 0.3)' : player.status === 'unsold' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(212, 175, 55, 0.3)'}`,
-                          color: player.status === 'sold' ? '#10b981' : player.status === 'unsold' ? '#ef4444' : '#D4AF37'
-                        }}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
-                        {player.status}
-                      </div>
-                    </div>
-
-                    {/* Player Photo Section - Always shown */}
-                    <div className="relative pt-4 pb-2 flex justify-center">
-                      <div className="relative">
-                        {player.photoUrl && player.photoUrl.trim() !== '' ? (
-                          <img 
-                            src={player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`} 
-                            alt={player.name}
-                            crossOrigin="anonymous"
-                            referrerPolicy="no-referrer"
-                            className="w-16 h-16 rounded-lg object-cover transition-all duration-300 group-hover:scale-105"
-                            style={{
-                              border: '1.5px solid rgba(212, 175, 55, 0.2)',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-                            }}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const parent = target.parentElement;
-                              if (parent) {
-                                const div = document.createElement('div');
-                                div.className = 'w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-extralight';
-                                div.style.cssText = 'background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%); border: 1.5px solid rgba(212, 175, 55, 0.2); color: #D4AF37;';
-                                div.textContent = player.name.charAt(0);
-                                parent.appendChild(div);
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-extralight transition-all duration-300 group-hover:scale-105"
-                            style={{
-                              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%)',
-                              border: '1.5px solid rgba(212, 175, 55, 0.2)',
-                              color: '#D4AF37',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-                            }}
-                          >
-                            {player.name.charAt(0)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Player Info - Name is always shown */}
-                    <div className="text-center px-3 pb-2">
-                      <h3 className="text-base font-semibold tracking-tight text-white truncate group-hover:text-amber-50 transition-colors">
-                        {player.name}
-                      </h3>
-                    </div>
-
-                    {/* All Selected Fields from Settings (without labels, high priority highlighted) */}
-                    {enabledFields.length > 0 && (
-                      <div className="px-3 pb-2">
-                        <div className="flex items-center justify-between text-[11px]">
-                          {enabledFields.slice(0, 2).map((field) => {
-                            const value = getPlayerFieldValue(player, field.fieldName);
-                            if (!value) return null;
-                            return (
-                              <span 
-                                key={field.fieldName} 
-                                className={field.isHighPriority ? 'text-amber-400 font-semibold' : 'text-gray-400'}
-                              >
-                                {value}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Sold Amount - Always show if player is sold */}
-                    {player.soldAmount && (
-                      <div className="px-3 pb-2">
-                        <div className="flex items-center justify-center rounded-md px-2 py-1.5"
-                          style={{
-                            background: 'rgba(16, 185, 129, 0.08)',
-                            border: '1px solid rgba(16, 185, 129, 0.15)'
+                    {/* Full-bleed Photo Area */}
+                    <div className="relative w-full aspect-[3/4] overflow-hidden">
+                      {/* Photo or Gradient Placeholder */}
+                      {player.photoUrl && player.photoUrl.trim() !== '' ? (
+                        <img 
+                          src={player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`} 
+                          alt={player.name}
+                          crossOrigin="anonymous"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
                           }}
+                        />
+                      ) : null}
+                      
+                      {/* Fallback Initial (shown if no photo or on error) */}
+                      {(!player.photoUrl || player.photoUrl.trim() === '') && (
+                        <div className="absolute inset-0 flex items-center justify-center"
+                          style={{ background: 'linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
                         >
-                          <span className="text-sm font-semibold text-emerald-400">
-                            ₹{player.soldAmount >= 100000 ? `${(player.soldAmount / 100000).toFixed(1)}L` : `${(player.soldAmount / 1000).toFixed(0)}K`}
+                          <span className="text-5xl font-extralight tracking-tight text-white/30">
+                            {player.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Action Buttons - Only for Auctioneers */}
+                      {/* Cinematic Bottom Gradient */}
+                      <div className="absolute inset-0" style={{
+                        background: 'linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.0) 55%, rgba(0,0,0,0.15) 100%)'
+                      }} />
+
+                      {/* Top-left: Status Badge */}
+                      <div className="absolute top-2.5 left-2.5">
+                        <div className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider backdrop-blur-md"
+                          style={{
+                            background: isSold ? 'rgba(16, 185, 129, 0.2)' : isUnsold ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 175, 55, 0.2)',
+                            border: `1px solid ${isSold ? 'rgba(16,185,129,0.35)' : isUnsold ? 'rgba(239,68,68,0.35)' : 'rgba(212,175,55,0.35)'}`,
+                            color: isSold ? '#6ee7b7' : isUnsold ? '#fca5a5' : '#fde68a',
+                          }}
+                        >
+                          {player.status}
+                        </div>
+                      </div>
+
+                      {/* Bottom Info Overlay */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3 pb-3.5">
+                        <h3 className="text-[15px] font-bold text-white truncate leading-tight tracking-tight drop-shadow-lg">
+                          {player.name}
+                        </h3>
+                        <div className="flex items-center justify-between mt-1">
+                          {isSold && player.soldAmount ? (
+                            <span className="text-sm font-bold" style={{ color: '#6ee7b7' }}>
+                              {formatCurrency(player.soldAmount)}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-gray-400 font-medium">
+                              {isSold ? 'Sold' : isUnsold ? 'Unsold' : 'Available'}
+                            </span>
+                          )}
+                          {isSold && player.team && (
+                            <span className="text-[10px] text-gray-400 truncate ml-2 max-w-[50%]">
+                              {typeof player.team === 'object' && player.team !== null ? (player.team as any).name : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Auctioneer Quick Actions — top-right, over the image */}
                     {isAuctioneer && (
-                      <div className="px-3 pb-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 z-10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingPlayer(player);
-                          }}
-                          className="flex-1 py-2 rounded-lg font-medium text-xs transition-all duration-200 flex items-center justify-center gap-1.5"
-                          style={{
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            border: '1px solid rgba(59, 130, 246, 0.2)',
-                            color: '#60a5fa'
-                          }}
+                          onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); }}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+                          style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.15)' }}
+                          title="Edit"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          <svg className="w-3.5 h-3.5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
-                          Edit
                         </button>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePlayer(player._id);
-                          }}
-                          className="flex-1 py-2 rounded-lg font-medium text-xs transition-all duration-200 flex items-center justify-center gap-1.5"
-                          style={{
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
-                            color: '#f87171'
-                          }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(player._id); }}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+                          style={{ background: 'rgba(239,68,68,0.2)', backdropFilter: 'blur(12px)', border: '1px solid rgba(239,68,68,0.3)' }}
+                          title="Delete"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          <svg className="w-3.5 h-3.5 text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
-                          Delete
                         </button>
                       </div>
                     )}
 
-                    {/* Bottom Accent */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[1px]"
-                      style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.15) 50%, transparent 100%)' }}
+                    {/* Hover border glow */}
+                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                      style={{ boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.15), 0 0 30px rgba(212, 175, 55, 0.12)' }}
                     />
                   </div>
                 </div>
               );
             })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -674,6 +654,18 @@ const PlayersPage: React.FC = () => {
           animation: floatHeader 7s ease-in-out infinite 2s;
         }
       `}</style>
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        title="Delete Player?"
+        message="Are you sure you want to delete this player? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => {
+          if (deleteConfirmId) handleDeletePlayer(deleteConfirmId);
+          setDeleteConfirmId(null);
+        }}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
     </div>
   );
 };

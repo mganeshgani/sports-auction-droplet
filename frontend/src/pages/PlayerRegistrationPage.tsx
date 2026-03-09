@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -36,7 +36,12 @@ const PlayerRegistrationPage: React.FC = () => {
   });
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadedUrl, setPhotoUploadedUrl] = useState<string>('');
+  const [photoUploadError, setPhotoUploadError] = useState<string>('');
+  const photoAbortRef = useRef<AbortController | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [validating, setValidating] = useState(true);
   const [linkValid, setLinkValid] = useState(false);
   const [auctioneerInfo, setAuctioneerInfo] = useState<{ name: string; email: string } | null>(null);
@@ -134,9 +139,36 @@ const PlayerRegistrationPage: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPhoto(file);
+      setPhotoUploadError('');
       const reader = new FileReader();
       reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
+
+      // Eagerly upload to Cloudinary
+      const uploadData = new FormData();
+      uploadData.append('photo', file);
+
+      if (photoAbortRef.current) photoAbortRef.current.abort();
+      const abortController = new AbortController();
+      photoAbortRef.current = abortController;
+
+      setPhotoUploading(true);
+      setPhotoUploadedUrl('');
+
+      axios.post(`${API_URL}/players/upload-photo-public`, uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        signal: abortController.signal
+      })
+        .then(res => {
+          setPhotoUploadedUrl(res.data.url);
+          setPhotoUploading(false);
+        })
+        .catch(err => {
+          if (axios.isCancel(err)) return;
+          console.error('Eager photo upload failed:', err);
+          setPhotoUploadError('Photo upload failed — will retry on submit');
+          setPhotoUploading(false);
+        });
     }
   };
 
@@ -151,6 +183,8 @@ const PlayerRegistrationPage: React.FC = () => {
     setFormData(resetData);
     setPhoto(null);
     setPhotoPreview('');
+    setPhotoUploadedUrl('');
+    setPhotoUploadError('');
     setMessage(null);
   };
 
@@ -188,7 +222,12 @@ const PlayerRegistrationPage: React.FC = () => {
       submitData.append('regNo', formData.regNo);
       submitData.append('token', token || '');
 
-      if (photo) submitData.append('photo', photo);
+      // Use pre-uploaded URL if available, otherwise send file as fallback
+      if (photoUploadedUrl) {
+        submitData.append('photoUrl', photoUploadedUrl);
+      } else if (photo) {
+        submitData.append('photo', photo);
+      }
 
       Object.keys(formData).forEach(key => {
         if (key !== 'name' && key !== 'regNo' && formData[key] !== '') {
@@ -196,8 +235,14 @@ const PlayerRegistrationPage: React.FC = () => {
         }
       });
 
+      setUploadProgress(0);
       await axios.post(`${API_URL}/players/register`, submitData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+          }
+        }
       });
 
       // Show success immediately (optimistic)
@@ -332,7 +377,7 @@ const PlayerRegistrationPage: React.FC = () => {
                                 )}
                               </label>
                               <div className="flex items-start gap-3">
-                                <label className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-slate-600/50 hover:border-amber-500/50 transition-all cursor-pointer overflow-hidden bg-slate-900/40 group">
+                                <label className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-slate-600/50 hover:border-amber-500/50 transition-all cursor-pointer overflow-hidden bg-slate-900/40 group">
                                   {photoPreview ? (
                                     <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                                   ) : (
@@ -341,6 +386,16 @@ const PlayerRegistrationPage: React.FC = () => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                       </svg>
                                       <span className="text-[9px] font-medium">Upload</span>
+                                    </div>
+                                  )}
+                                  {photoUploading && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-xl">
+                                      <div className="w-7 h-7 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                  )}
+                                  {photoUploadedUrl && !photoUploading && (
+                                    <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-gray-900">
+                                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                                     </div>
                                   )}
                                   <input
@@ -512,7 +567,7 @@ const PlayerRegistrationPage: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || photoUploading}
                     onClick={handleSubmit}
                     className="w-full sm:w-auto px-5 py-2 bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-500 hover:via-amber-400 hover:to-yellow-400 text-xs sm:text-sm font-bold text-white rounded-lg shadow-lg shadow-amber-500/40 transform transition-all hover:scale-[1.02] hover:shadow-amber-500/60 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
@@ -529,6 +584,25 @@ const PlayerRegistrationPage: React.FC = () => {
                     )}
                   </button>
                 </div>
+
+                {/* Upload Progress Bar */}
+                {loading && uploadProgress > 0 && (
+                  <div className="mt-3">
+                    <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                      <span>Uploading...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-200"
+                        style={{
+                          width: `${uploadProgress}%`,
+                          background: 'linear-gradient(90deg, #d97706, #f59e0b)'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
             </div>
 
             {/* Footer */}

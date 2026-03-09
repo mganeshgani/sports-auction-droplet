@@ -27,19 +27,24 @@ const allowedOrigins = [
   'https://neoauction-*.vercel.app' // Allow Vercel preview deployments
 ].filter(Boolean); // Remove undefined values
 
+// Shared CORS origin checker used by both Socket.io and Express
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  return allowedOrigins.some(allowedOrigin => {
+    if (allowedOrigin.includes('*')) {
+      const pattern = allowedOrigin.replace(/\*/g, '.*');
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(origin);
+    }
+    return allowedOrigin === origin;
+  });
+}
+
 // Socket.io configuration with extended timeouts for long auction sessions (1+ hour idle support)
 const io = new Server(server, {
   cors: {
     origin: function(origin, callback) {
-      if (!origin) return callback(null, true);
-      const isAllowed = allowedOrigins.some(allowedOrigin => {
-        if (allowedOrigin.includes('*')) {
-          const pattern = new RegExp(allowedOrigin.replace('*', '.*'));
-          return pattern.test(origin);
-        }
-        return allowedOrigin === origin;
-      });
-      if (isAllowed) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -129,22 +134,11 @@ io.on('connection', (socket) => {
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin matches any allowed pattern
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      if (allowedOrigin.includes('*')) {
-        const pattern = new RegExp(allowedOrigin.replace('\\*', '.*'));
-        return pattern.test(origin);
-      }
-      return allowedOrigin === origin;
-    });
-    
-    if (isAllowed) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
-      callback(null, true); // Allow all for development
+      callback(new Error(`CORS: Origin ${origin} not allowed`), false);
     }
   },
   credentials: true,
@@ -227,6 +221,8 @@ const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
 // MongoDB Connection with optimized settings for long auction sessions (1+ hour idle support)
+// Using MongoDB Atlas — transactions are supported via replica set
+// Required for atomic player assignment operations
 const path = require('path');
 mongoose.connect(process.env.MONGODB_URI, {
   maxPoolSize: 20, // Increased for better concurrency
@@ -239,25 +235,13 @@ mongoose.connect(process.env.MONGODB_URI, {
   retryReads: true,
   heartbeatFrequencyMS: 10000, // Check server health every 10 seconds
 })
-.then(() => {
+.then(async () => {
   console.log('✅ Connected to MongoDB Atlas');
   
-  // Start MongoDB keep-alive ping every 30 seconds (more aggressive for long sessions)
-  setInterval(async () => {
-    try {
-      if (mongoose.connection.readyState === 1) {
-        await mongoose.connection.db.admin().ping();
-        // Silent ping - only log errors
-      }
-    } catch (err) {
-      console.warn('⚠️ MongoDB keep-alive ping failed:', err.message);
-    }
-  }, 30000); // Every 30 seconds
-  
-  // Initial ping
-  mongoose.connection.db.admin().ping().then(() => {
-    console.log('✅ MongoDB initial ping successful');
-  });
+  // Sync indexes to drop stale unique constraints from old schema versions
+  const Player = require('./models/player.model');
+  await Player.syncIndexes();
+  console.log('✅ Player indexes synced');
 })
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 

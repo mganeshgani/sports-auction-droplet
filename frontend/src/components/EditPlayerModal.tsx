@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Player } from '../types';
 import { toast } from 'react-toastify';
@@ -40,6 +40,10 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ player, onClose, onSu
   ]);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>(player?.photoUrl || '');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadedUrl, setPhotoUploadedUrl] = useState<string>('');
+  const [photoUploadError, setPhotoUploadError] = useState<string>('');
+  const photoAbortRef = useRef<AbortController | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({
@@ -94,11 +98,41 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ player, onClose, onSu
     const file = e.target.files?.[0];
     if (file) {
       setPhoto(file);
+      setPhotoUploadError('');
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+
+      // Eagerly upload to Cloudinary immediately
+      const token = localStorage.getItem('token');
+      const uploadData = new FormData();
+      uploadData.append('photo', file);
+
+      // Cancel any previous upload
+      if (photoAbortRef.current) photoAbortRef.current.abort();
+      const abortController = new AbortController();
+      photoAbortRef.current = abortController;
+
+      setPhotoUploading(true);
+      setPhotoUploadedUrl('');
+
+      axios.post(`${API_URL}/players/upload-photo`, uploadData, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        signal: abortController.signal
+      })
+        .then(res => {
+          setPhotoUploadedUrl(res.data.url);
+          setPhotoUploading(false);
+          toast.success('Photo uploaded!', { autoClose: 1500 });
+        })
+        .catch(err => {
+          if (axios.isCancel(err)) return;
+          console.error('Eager photo upload failed:', err);
+          setPhotoUploadError('Photo upload failed — will retry on save');
+          setPhotoUploading(false);
+        });
     }
   };
 
@@ -129,13 +163,16 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ player, onClose, onSu
           submitData.append(key, formData[key]);
         }
       });
-      
-      // Add photo if present
-      if (photo) {
+
+      // If photo was pre-uploaded, send the URL; otherwise send the file as fallback
+      if (photoUploadedUrl) {
+        submitData.append('photoUrl', photoUploadedUrl);
+        setUploadProgress({ status: 'uploading', progress: 50, message: 'Saving player...' });
+      } else if (photo) {
         submitData.append('photo', photo);
         setUploadProgress({ status: 'uploading', progress: 20, message: 'Uploading photo...' });
       } else {
-        setUploadProgress({ status: 'uploading', progress: 30, message: 'Saving player data...' });
+        setUploadProgress({ status: 'uploading', progress: 50, message: 'Saving player...' });
       }
 
       // Clear cache before making API calls
@@ -330,11 +367,28 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ player, onClose, onSu
               </label>
               <div className="flex items-center gap-3 sm:gap-4">
                 {photoPreview ? (
-                  <img 
-                    src={photoPreview} 
-                    alt="Preview" 
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-amber-500/50"
-                  />
+                  <div className="relative">
+                    <img 
+                      src={photoPreview} 
+                      alt="Preview" 
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-amber-500/50"
+                    />
+                    {photoUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
+                        <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                    {photoUploadedUrl && !photoUploading && (
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-gray-900">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                    )}
+                    {photoUploadError && !photoUploading && (
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center border-2 border-gray-900" title={photoUploadError}>
+                        <span className="text-[10px] font-bold text-white">!</span>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-700 flex items-center justify-center text-2xl sm:text-3xl text-gray-400">
                     👤
@@ -430,7 +484,7 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ player, onClose, onSu
             </button>
             <button
               type="submit"
-              disabled={loading || uploadProgress.status === 'success'}
+              disabled={loading || uploadProgress.status === 'success' || photoUploading}
               className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 disabled:from-gray-600 disabled:to-gray-700 rounded-lg font-bold text-white text-sm sm:text-base transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (

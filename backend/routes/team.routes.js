@@ -41,8 +41,7 @@ router.delete('/', teamController.deleteAllTeams);
 router.put('/:teamId', upload.single('logo'), teamController.updateTeam);
 router.patch('/:teamId', upload.single('logo'), teamController.updateTeam);
 
-// Update team (PATCH - same as PUT)
-router.patch('/:teamId', teamController.updateTeam);
+// Duplicate PATCH route removed (already registered above with file upload support)
 
 // Delete single team
 router.delete('/:teamId', teamController.deleteTeam);

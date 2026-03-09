@@ -49,7 +49,9 @@ const userSchema = new mongoose.Schema({
       default: null // null means unlimited
     }
   },
-  // Current usage (tracked automatically)
+  // DEPRECATED: These counters are never updated and always stale.
+  // Use live counts via Player.countDocuments / Team.countDocuments instead.
+  // Kept for backward compatibility but should not be read from.
   usage: {
     totalPlayers: {
       type: Number,
