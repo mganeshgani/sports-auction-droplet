@@ -84,8 +84,8 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
         /* ═══════════════════════════════════════════
            DESIGN PHILOSOPHY — Hermès / Apple / Rolex
            ─ Deep black canvas (#08080f)
-           ─ Warm gold accent: #c9a84c → #e8d5a3
-           ─ Monochromatic restraint: one accent, generous space
+           ─ Position-dynamic accent colors (batsman=amber, bowler=blue, all-rounder=green, wk=purple)
+           ─ Monochromatic restraint: one accent per position, generous space
            ─ Slow, intentional motion (6-20s cycles)
            ─ Typography: Georgia serif, large, breathing
            ═══════════════════════════════════════════ */
@@ -129,8 +129,8 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
 
         /* ── Card Atmosphere ── */
         @keyframes breathe {
-          0%, 100% { box-shadow: 0 0 60px rgba(201,168,76,0.08), 0 25px 80px rgba(0,0,0,0.6); }
-          50%      { box-shadow: 0 0 100px rgba(201,168,76,0.16), 0 30px 100px rgba(0,0,0,0.5); }
+          0%, 100% { box-shadow: 0 0 70px ${positionColors.light}1F, 0 25px 80px rgba(0,0,0,0.6); }
+          50%      { box-shadow: 0 0 120px ${positionColors.light}38, 0 30px 100px rgba(0,0,0,0.5); }
         }
         @keyframes borderPulse {
           0%, 100% { opacity: 0.15; }
@@ -143,8 +143,8 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
 
         /* ── Photo Presence ── */
         @keyframes photoAura {
-          0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px ${positionColors.light}10; }
-          50%      { box-shadow: 0 24px 70px rgba(0,0,0,0.5), 0 0 70px ${positionColors.light}20; }
+          0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 50px ${positionColors.light}28; }
+          50%      { box-shadow: 0 24px 70px rgba(0,0,0,0.5), 0 0 90px ${positionColors.light}40; }
         }
 
         /* ── Sold Button ── */
@@ -179,31 +179,31 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
 
         {/* Thin gold border with pulse */}
         <div className="absolute inset-0 rounded-[24px] sm:rounded-[32px] pointer-events-none z-30"
-          style={{ border: '1px solid rgba(201,168,76,0.2)', animation: 'borderPulse 4s ease-in-out infinite' }}/>
+          style={{ border: `1px solid ${positionColors.light}33`, animation: 'borderPulse 4s ease-in-out infinite' }}/>
 
-        {/* Gold light trace — top edge */}
+        {/* Position-colored light trace — top edge */}
         <div className="absolute top-0 left-0 right-0 h-[1px] z-30 overflow-hidden pointer-events-none">
           <div className="absolute h-full w-[30%]" style={{
-            background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.7) 50%, transparent)',
+            background: `linear-gradient(90deg, transparent, ${positionColors.light}B3 50%, transparent)`,
             animation: 'traceTop 6s ease-in-out infinite',
           }}/>
         </div>
-        {/* Gold light trace — right edge */}
+        {/* Position-colored light trace — right edge */}
         <div className="absolute top-0 right-0 bottom-0 w-[1px] z-30 overflow-hidden pointer-events-none">
           <div className="absolute w-full h-[30%]" style={{
-            background: 'linear-gradient(180deg, transparent, rgba(201,168,76,0.5) 50%, transparent)',
+            background: `linear-gradient(180deg, transparent, ${positionColors.light}80 50%, transparent)`,
             animation: 'traceRight 8s ease-in-out 3s infinite',
           }}/>
         </div>
 
         {/* ═══════ LIQUID AURORA BACKGROUND ═══════ */}
         <div className="absolute inset-0" style={{ background: '#08080f' }}>
-          {/* Primary warm gold aurora */}
+          {/* Primary position-colored aurora */}
           <div className="absolute top-[-30%] right-[-20%] w-[70%] h-[80%] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.04) 50%, transparent 75%)', filter: 'blur(60px)', animation: 'liquidA 14s ease-in-out infinite' }}/>
+            style={{ background: `radial-gradient(ellipse, ${positionColors.light}38 0%, ${positionColors.light}14 50%, transparent 75%)`, filter: 'blur(60px)', animation: 'liquidA 14s ease-in-out infinite' }}/>
           {/* Secondary deep accent */}
           <div className="absolute bottom-[-25%] left-[-15%] w-[65%] h-[75%] rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(ellipse, ${positionColors.light}15 0%, ${positionColors.dark}04 50%, transparent 75%)`, filter: 'blur(70px)', animation: 'liquidB 18s ease-in-out infinite' }}/>
+            style={{ background: `radial-gradient(ellipse, ${positionColors.dark}26 0%, ${positionColors.dark}0A 50%, transparent 75%)`, filter: 'blur(70px)', animation: 'liquidB 18s ease-in-out infinite' }}/>
           {/* Subtle violet depth */}
           <div className="absolute top-[30%] left-[20%] w-[60%] h-[60%] rounded-full pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(88,60,160,0.09) 0%, transparent 65%)', filter: 'blur(80px)', animation: 'liquidC 20s ease-in-out infinite' }}/>
@@ -229,13 +229,13 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
             <div className="pc-photo-w relative flex-shrink-0">
               {/* Soft ambient glow behind photo */}
               <div className="absolute -inset-4 rounded-[22px] sm:rounded-[26px]" style={{
-                background: `radial-gradient(ellipse, ${positionColors.light}18 0%, ${positionColors.light}06 50%, transparent 80%)`,
+                background: `radial-gradient(ellipse, ${positionColors.light}33 0%, ${positionColors.light}14 50%, transparent 80%)`,
                 filter: 'blur(20px)',
                 animation: 'borderPulse 5s ease-in-out infinite',
               }}/>
-              {/* Gold gradient border */}
+              {/* Position-colored gradient border */}
               <div className="absolute -inset-[2px] rounded-[20px] sm:rounded-[24px]" style={{
-                background: 'linear-gradient(160deg, rgba(201,168,76,0.35) 0%, rgba(201,168,76,0.1) 40%, rgba(201,168,76,0.25) 100%)',
+                background: `linear-gradient(160deg, ${positionColors.light}59 0%, ${positionColors.light}1A 40%, ${positionColors.light}40 100%)`,
               }}/>
               {/* Photo */}
               <div className="relative rounded-[18px] sm:rounded-[22px] overflow-hidden"
@@ -259,10 +259,10 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                   fontWeight: 900,
                   lineHeight: 1.25,
                   paddingBottom: '4px',
-                  background: 'linear-gradient(135deg, #ffffff 0%, #e8d5a3 30%, #c9a84c 55%, #e8d5a3 80%, #ffffff 100%)',
+                  background: `linear-gradient(135deg, #ffffff 0%, ${positionColors.light} 30%, ${positionColors.dark} 55%, ${positionColors.light} 80%, #ffffff 100%)`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 2px 12px rgba(201,168,76,0.25))',
+                  filter: `drop-shadow(0 2px 16px ${positionColors.light}4D)`,
                   fontFamily: "'Georgia', 'Times New Roman', serif",
                   letterSpacing: '-0.01em',
                 }}>
@@ -281,12 +281,13 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                         fontSize: '0.75rem',
                         letterSpacing: '0.1em',
                         background: field.isHighPriority
-                          ? 'rgba(201,168,76,0.1)'
+                          ? `${positionColors.light}1A`
                           : 'rgba(255,255,255,0.04)',
                         border: field.isHighPriority
-                          ? '1px solid rgba(201,168,76,0.25)'
+                          ? `1px solid ${positionColors.light}40`
                           : '1px solid rgba(255,255,255,0.08)',
-                        color: field.isHighPriority ? '#d4b96a' : 'rgba(255,255,255,0.5)',
+                        color: field.isHighPriority ? positionColors.light : 'rgba(255,255,255,0.5)',
+                        boxShadow: field.isHighPriority ? `0 0 14px ${positionColors.light}1A` : 'none',
                         animationDelay: `${0.5 + i * 0.08}s`,
                       }}>
                       {String(field.value)}
@@ -298,19 +299,19 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
               {/* Thin separator line */}
               <div className="pc-ct-3">
                 <div className="h-[1px] w-full" style={{
-                  background: 'linear-gradient(to right, rgba(201,168,76,0.25), rgba(201,168,76,0.06) 60%, transparent)',
+                  background: `linear-gradient(to right, ${positionColors.light}40, ${positionColors.light}0F 60%, transparent)`,
                 }}/>
               </div>
 
               {/* Bid Input */}
               <div className="pc-ct-4">
                 <label className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] mb-2 block"
-                  style={{ color: 'rgba(201,168,76,0.4)' }}>
+                  style={{ color: `${positionColors.light}66` }}>
                   Bid Amount
                 </label>
                 <div className="relative">
                   <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xl sm:text-2xl font-bold pointer-events-none"
-                    style={{ color: 'rgba(201,168,76,0.2)' }}>₹</span>
+                    style={{ color: `${positionColors.light}33` }}>₹</span>
                   <input
                     type="number"
                     value={soldAmount || ''}
@@ -323,7 +324,7 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                       border: `1px solid ${bidError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.06)'}`,
                       boxShadow: bidError ? '0 0 20px rgba(239,68,68,0.06)' : 'inset 0 2px 6px rgba(0,0,0,0.2)',
                     }}
-                    onFocus={(e) => { if (!bidError) { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(201,168,76,0.06), inset 0 2px 6px rgba(0,0,0,0.2)'; }}}
+                    onFocus={(e) => { if (!bidError) { e.currentTarget.style.borderColor = `${positionColors.light}4D`; e.currentTarget.style.boxShadow = `0 0 0 3px ${positionColors.light}0F, inset 0 2px 6px rgba(0,0,0,0.2)`; }}}
                     onBlur={(e) => { if (!bidError) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = 'inset 0 2px 6px rgba(0,0,0,0.2)'; }}}
                   />
                 </div>
