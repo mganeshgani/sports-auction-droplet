@@ -64,7 +64,7 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
   bidError,
 }) => {
   const positionColors = useMemo(() => getPositionColor(player.position || ''), [player.position]);
-  const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
+  const BACKEND_URL = process.env.REACT_APP_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:5001';
 
   // Get field values for enabled fields only (includes isHighPriority flag)
   const fieldsToShow = useMemo(() => {

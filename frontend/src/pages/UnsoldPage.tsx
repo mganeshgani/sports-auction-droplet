@@ -18,7 +18,7 @@ const UnsoldPage: React.FC = () => {
   const [soldAmount, setSoldAmount] = useState<number>(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
 
-  const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
+  const BACKEND_URL = process.env.REACT_APP_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:5001';
   const lastCelebrationRef = useRef(0);
   
   const fetchUnsoldPlayers = useCallback(async (bypassCache = false) => {

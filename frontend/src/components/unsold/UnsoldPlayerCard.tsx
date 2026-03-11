@@ -1,7 +1,7 @@
 import React from 'react';
 import { Player } from '../../types';
 
-const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
+const BACKEND_URL = process.env.REACT_APP_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:5001';
 
 interface UnsoldPlayerCardProps {
   player: Player;

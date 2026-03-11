@@ -16,7 +16,7 @@ interface PlayerDetailModalProps {
 }
 
 const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({ player, onClose }) => {
-  const BACKEND_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
+  const BACKEND_URL = process.env.REACT_APP_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:5001';
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [highPriorityField, setHighPriorityField] = useState<string | null>(null);
