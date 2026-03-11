@@ -81,200 +81,178 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
   return (
     <div className="premium-player-card-wrapper">
       <style>{`
-        /* ── Entrance ── */
         @keyframes cardReveal {
-          0%   { opacity: 0; transform: perspective(800px) rotateY(-8deg) scale(0.92); filter: blur(12px); }
-          60%  { opacity: 1; transform: perspective(800px) rotateY(2deg) scale(1.02); filter: blur(0); }
-          100% { opacity: 1; transform: perspective(800px) rotateY(0) scale(1); filter: blur(0); }
+          0%   { opacity: 0; transform: perspective(900px) rotateY(-6deg) scale(0.94); filter: blur(8px); }
+          60%  { opacity: 1; transform: perspective(900px) rotateY(1.5deg) scale(1.01); filter: blur(0); }
+          100% { opacity: 1; transform: perspective(900px) rotateY(0) scale(1); filter: blur(0); }
         }
         @keyframes photoFloat {
-          0%   { opacity: 0; transform: translateY(24px) scale(0.9); filter: blur(10px); }
-          100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-        }
-        @keyframes textSlide {
-          0%   { opacity: 0; transform: translateX(-16px); }
-          100% { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes btnPop {
-          0%   { opacity: 0; transform: translateY(12px) scale(0.9); }
+          0%   { opacity: 0; transform: translateY(20px) scale(0.92); }
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes borderPulse {
-          0%, 100% { opacity: 0.4; }
-          50%      { opacity: 0.8; }
+        @keyframes contentSlide {
+          0%   { opacity: 0; transform: translateY(14px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes btnReveal {
+          0%   { opacity: 0; transform: translateY(10px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes shimmerSweep {
-          0%   { transform: translateX(-120%); }
-          100% { transform: translateX(300%); }
+          0%   { transform: translateX(-150%) skewX(-15deg); }
+          100% { transform: translateX(350%) skewX(-15deg); }
         }
-        @keyframes haloBreath {
-          0%, 100% { box-shadow: 0 0 30px rgba(212,175,55,0.15), 0 8px 40px rgba(0,0,0,0.6); }
-          50%      { box-shadow: 0 0 50px rgba(212,175,55,0.3),  0 12px 60px rgba(0,0,0,0.5); }
+        @keyframes meshFloat1 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
+          50%      { transform: translate(30px, -20px) scale(1.15); opacity: 0.55; }
         }
-        @keyframes dotPulse {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50%      { opacity: 0.7; transform: scale(1.4); }
+        @keyframes meshFloat2 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+          50%      { transform: translate(-25px, 15px) scale(1.2); opacity: 0.45; }
+        }
+        @keyframes meshFloat3 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+          50%      { transform: translate(15px, 25px) scale(1.1); opacity: 0.4; }
+        }
+        @keyframes tagSlide {
+          0%   { opacity: 0; transform: translateX(-8px) scale(0.9); }
+          100% { opacity: 1; transform: translateX(0) scale(1); }
         }
 
-        .premium-player-card-wrapper {
-          animation: cardReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        .pc-photo        { animation: photoFloat 0.7s ease-out 0.25s both; }
-        .pc-name         { animation: textSlide  0.6s ease-out 0.5s both; }
-        .pc-fields       { animation: textSlide  0.5s ease-out 0.65s both; }
-        .pc-input        { animation: textSlide  0.5s ease-out 0.75s both; }
-        .pc-btn-1        { animation: btnPop     0.5s cubic-bezier(0.34,1.56,0.64,1) 0.9s both; }
-        .pc-btn-2        { animation: btnPop     0.5s cubic-bezier(0.34,1.56,0.64,1) 1.0s both; }
+        .premium-player-card-wrapper { animation: cardReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .pc-photo    { animation: photoFloat   0.7s ease-out 0.2s both; }
+        .pc-content  { animation: contentSlide 0.6s ease-out 0.45s both; }
+        .pc-tags     { animation: contentSlide 0.5s ease-out 0.55s both; }
+        .pc-input    { animation: contentSlide 0.5s ease-out 0.65s both; }
+        .pc-btn-1    { animation: btnReveal    0.5s cubic-bezier(0.34,1.56,0.64,1) 0.85s both; }
+        .pc-btn-2    { animation: btnReveal    0.5s cubic-bezier(0.34,1.56,0.64,1) 0.95s both; }
       `}</style>
 
-      {/* OUTER WRAPPER — subtle glowing halo */}
-      <div
-        className="relative rounded-2xl sm:rounded-3xl overflow-hidden"
-        style={{ animation: 'haloBreath 4s ease-in-out infinite' }}
-      >
-        {/* Animated gold border accent */}
-        <div className="absolute inset-0 rounded-2xl sm:rounded-3xl pointer-events-none z-10"
-          style={{
-            border: '1.5px solid rgba(212,175,55,0.35)',
-            animation: 'borderPulse 3s ease-in-out infinite'
-          }}
-        />
+      {/* CARD SHELL */}
+      <div className="relative rounded-[20px] sm:rounded-[24px] overflow-hidden"
+        style={{ boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 24px 80px rgba(0,0,0,0.7), 0 0 60px rgba(201,168,76,0.08)' }}>
 
-        {/* Shimmer sweep overlay */}
-        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-2xl sm:rounded-3xl">
-          <div className="absolute inset-0 opacity-[0.08]"
-            style={{
-              background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%)',
-              animation: 'shimmerSweep 4s ease-in-out infinite'
-            }}
-          />
+        {/* ── MESH GRADIENT BACKGROUND ── */}
+        <div className="absolute inset-0" style={{ background: '#07070d' }}>
+          {/* Mesh orb 1 — top-right warm */}
+          <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.3) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'meshFloat1 8s ease-in-out infinite' }} />
+          {/* Mesh orb 2 — bottom-left cool */}
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full pointer-events-none"
+            style={{ background: `radial-gradient(circle, ${positionColors.light}25 0%, transparent 70%)`, filter: 'blur(70px)', animation: 'meshFloat2 10s ease-in-out infinite' }} />
+          {/* Mesh orb 3 — center accent */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(120,100,180,0.12) 0%, transparent 70%)', filter: 'blur(80px)', animation: 'meshFloat3 12s ease-in-out infinite' }} />
+          {/* Noise texture overlay for grain */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'repeat', backgroundSize: '128px 128px'
+          }}/>
         </div>
 
-        {/* Card body */}
-        <div className="relative p-4 sm:p-6 lg:p-8" style={{
-          background: 'linear-gradient(145deg, rgba(8,8,14,0.97) 0%, rgba(18,18,28,0.95) 40%, rgba(12,12,20,0.97) 100%)',
-        }}>
+        {/* Top shimmer line */}
+        <div className="absolute top-0 inset-x-0 h-[1px] z-20 overflow-hidden">
+          <div className="h-full w-1/3 opacity-40"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.8), transparent)', animation: 'shimmerSweep 5s ease-in-out infinite' }} />
+        </div>
 
-          {/* Ambient tinted glow behind content */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[70%] h-32 rounded-full pointer-events-none" style={{
-            background: `radial-gradient(ellipse, ${positionColors.light}15 0%, transparent 70%)`,
-            filter: 'blur(30px)'
-          }}/>
+        {/* CARD CONTENT */}
+        <div className="relative z-10 p-5 sm:p-7 lg:p-9">
+          <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-center lg:items-stretch">
 
-          {/* Decorative corner dots */}
-          <div className="absolute top-3 left-3 w-1 h-1 rounded-full bg-amber-400" style={{ animation: 'dotPulse 3s ease-in-out infinite' }}/>
-          <div className="absolute top-3 right-3 w-1 h-1 rounded-full bg-amber-400" style={{ animation: 'dotPulse 3s ease-in-out 1.5s infinite' }}/>
-          <div className="absolute bottom-3 left-3 w-1 h-1 rounded-full bg-amber-400" style={{ animation: 'dotPulse 3s ease-in-out 0.8s infinite' }}/>
-          <div className="absolute bottom-3 right-3 w-1 h-1 rounded-full bg-amber-400" style={{ animation: 'dotPulse 3s ease-in-out 2.2s infinite' }}/>
+            {/* ── LEFT: Photo ── */}
+            <div className="pc-photo relative flex-shrink-0">
+              {/* Soft glow behind photo */}
+              <div className="absolute -inset-3 rounded-[20px]" style={{
+                background: `linear-gradient(160deg, ${positionColors.light}18, transparent 50%, rgba(201,168,76,0.1))`,
+                filter: 'blur(12px)'
+              }}/>
+              <div className="relative rounded-[16px] sm:rounded-[20px] overflow-hidden" style={{
+                border: '1.5px solid rgba(255,255,255,0.1)',
+                boxShadow: `0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)`
+              }}>
+                <img
+                  src={player.photoUrl ? (player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`) : '/default-avatar.png'}
+                  alt={player.name}
+                  loading="lazy"
+                  className="w-40 h-48 sm:w-48 sm:h-56 md:w-52 md:h-60 lg:w-56 lg:h-[17rem] object-cover"
+                />
+                {/* Photo bottom fade */}
+                <div className="absolute inset-x-0 bottom-0 h-1/4"
+                  style={{ background: 'linear-gradient(to top, rgba(7,7,13,0.8), transparent)' }} />
+              </div>
+            </div>
 
-          <div className="relative flex flex-col lg:flex-row gap-5 sm:gap-7 items-center lg:items-stretch">
+            {/* ── RIGHT: Info Section ── */}
+            <div className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 w-full min-w-0">
 
-            {/* ──── LEFT: Photo + field pills ──── */}
-            <div className="flex flex-col items-center gap-4 flex-shrink-0">
-              {/* Photo container with position-coloured ring */}
-              <div className="pc-photo relative">
-                {/* Outer glow ring */}
-                <div className="absolute -inset-2 rounded-2xl sm:rounded-3xl" style={{
-                  background: `linear-gradient(135deg, ${positionColors.light}30, transparent 60%, ${positionColors.dark}30)`,
-                  filter: 'blur(8px)'
-                }}/>
-                {/* Image frame */}
-                <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden" style={{
-                  border: `2px solid ${positionColors.light}50`,
-                  boxShadow: `0 8px 32px ${positionColors.light}20, inset 0 0 20px rgba(0,0,0,0.4)`
-                }}>
-                  <img
-                    src={player.photoUrl ? (player.photoUrl.startsWith('http') ? player.photoUrl : `${BACKEND_URL}${player.photoUrl}`) : '/default-avatar.png'}
-                    alt={player.name}
-                    loading="lazy"
-                    className="w-36 h-44 sm:w-44 sm:h-52 md:w-48 md:h-56 lg:w-52 lg:h-64 object-cover"
-                  />
-                  {/* Bottom gradient overlay for depth */}
-                  <div className="absolute inset-x-0 bottom-0 h-1/3" style={{
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)'
-                  }}/>
-                </div>
+              {/* Player Name */}
+              <div className="pc-content text-center lg:text-left">
+                <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl font-black leading-[1.08] tracking-tight"
+                  style={{
+                    background: 'linear-gradient(135deg, #ffffff 0%, #e8dcc8 40%, #c9a84c 70%, #ffffff 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.4))',
+                    fontFamily: "'Georgia', 'Times New Roman', serif"
+                  }}>
+                  {player.name}
+                </h1>
               </div>
 
-              {/* Field pills below photo */}
+              {/* Field Tags — values only, no labels */}
               {fieldsToShow.length > 0 && (
-                <div className="pc-fields flex flex-col gap-2 w-full">
-                  {fieldsToShow.map((field) => (
-                    <div
+                <div className="pc-tags flex flex-wrap gap-2 justify-center lg:justify-start">
+                  {fieldsToShow.map((field, i) => (
+                    <span
                       key={field.fieldName}
-                      className="rounded-lg px-3 py-2 text-center transition-colors"
+                      className="inline-flex items-center rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wide"
                       style={{
+                        padding: '6px 16px',
                         background: field.isHighPriority
-                          ? 'linear-gradient(135deg, rgba(212,175,55,0.14) 0%, rgba(212,175,55,0.06) 100%)'
-                          : 'rgba(255,255,255,0.04)',
+                          ? 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.08))'
+                          : 'rgba(255,255,255,0.05)',
                         border: field.isHighPriority
-                          ? '1px solid rgba(212,175,55,0.35)'
-                          : '1px solid rgba(255,255,255,0.08)'
-                      }}
-                    >
-                      <span className="text-[10px] uppercase tracking-wider block mb-0.5" style={{
-                        color: field.isHighPriority ? 'rgba(212,175,55,0.6)' : 'rgba(255,255,255,0.3)'
-                      }}>{field.fieldLabel}</span>
-                      <span className={`font-bold text-sm ${field.isHighPriority ? 'text-amber-300' : 'text-white'}`}>
-                        {String(field.value)}
-                      </span>
-                    </div>
+                          ? '1px solid rgba(201,168,76,0.3)'
+                          : '1px solid rgba(255,255,255,0.08)',
+                        color: field.isHighPriority ? '#d4b85a' : 'rgba(255,255,255,0.65)',
+                        animation: `tagSlide 0.4s ease-out ${0.6 + i * 0.08}s both`,
+                        letterSpacing: '0.06em'
+                      }}>
+                      {String(field.value)}
+                    </span>
                   ))}
                 </div>
               )}
-            </div>
 
-            {/* ──── RIGHT: Name / Input / Buttons ──── */}
-            <div className="flex-1 flex flex-col justify-center gap-5 sm:gap-6 w-full min-w-0">
-
-              {/* Player Name */}
-              <div className="pc-name text-center lg:text-left">
-                <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] mb-1.5" style={{ color: `${positionColors.light}90` }}>
-                  Now On The Block
-                </p>
-                <h1
-                  className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-black leading-[1.1] pb-1"
-                  style={{
-                    background: `linear-gradient(135deg, #fff 0%, ${positionColors.light} 50%, #fff 100%)`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    filter: `drop-shadow(0 2px 12px ${positionColors.light}40)`,
-                    fontFamily: "'Georgia', serif"
-                  }}
-                >
-                  {player.name}
-                </h1>
-                {/* Underline accent */}
-                <div className="mt-2 flex items-center gap-1.5 justify-center lg:justify-start">
-                  <div className="h-[2px] w-10 rounded-full" style={{ background: `linear-gradient(to right, ${positionColors.light}, transparent)` }}/>
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: positionColors.light, opacity: 0.6 }}/>
-                </div>
+              {/* Separator */}
+              <div className="hidden lg:flex items-center gap-2 pc-content" style={{ animationDelay: '0.55s' }}>
+                <div className="h-[1px] flex-1" style={{ background: 'linear-gradient(to right, rgba(201,168,76,0.25), transparent)' }}/>
               </div>
 
-              {/* Bid Amount Input */}
+              {/* Bid Input */}
               <div className="pc-input">
-                <label className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold mb-2" style={{ color: 'rgba(212,175,55,0.7)' }}>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
+                <label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium uppercase tracking-[0.12em] mb-2"
+                  style={{ color: 'rgba(201,168,76,0.55)' }}>
                   Bid Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg sm:text-xl font-bold text-amber-400/50 pointer-events-none">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg sm:text-xl font-bold pointer-events-none"
+                    style={{ color: 'rgba(201,168,76,0.35)' }}>₹</span>
                   <input
                     type="number"
                     value={soldAmount || ''}
                     onChange={(e) => setSoldAmount(Number(e.target.value))}
-                    className="w-full pl-9 pr-4 py-3 sm:py-4 text-lg sm:text-2xl font-bold rounded-xl text-white placeholder-slate-600 focus:outline-none transition-all duration-200"
+                    className="w-full pl-10 pr-4 py-3 sm:py-3.5 text-xl sm:text-2xl font-bold rounded-xl text-white placeholder-white/15 focus:outline-none transition-all duration-300"
                     placeholder="0"
                     disabled={loading}
                     style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: `1.5px solid ${bidError ? 'rgba(239,68,68,0.6)' : 'rgba(212,175,55,0.2)'}`,
-                      boxShadow: bidError ? '0 0 16px rgba(239,68,68,0.12)' : '0 0 16px rgba(0,0,0,0.3)',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: `1.5px solid ${bidError ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                      boxShadow: bidError ? '0 0 20px rgba(239,68,68,0.1)' : 'inset 0 2px 6px rgba(0,0,0,0.2)',
                     }}
-                    onFocus={(e) => { if (!bidError) { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'; e.currentTarget.style.boxShadow = '0 0 24px rgba(212,175,55,0.1)'; }}}
-                    onBlur={(e) => { if (!bidError) { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(0,0,0,0.3)'; }}}
+                    onFocus={(e) => { if (!bidError) { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.35)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(201,168,76,0.08), inset 0 2px 6px rgba(0,0,0,0.2)'; }}}
+                    onBlur={(e) => { if (!bidError) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'inset 0 2px 6px rgba(0,0,0,0.2)'; }}}
                   />
                 </div>
                 {bidError && (
@@ -292,24 +270,26 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                   <button
                     onClick={handleSoldClick}
                     disabled={loading}
-                    className="pc-btn-1 group relative flex-1 py-3.5 sm:py-4 rounded-xl font-black text-sm sm:text-base tracking-[0.15em] overflow-hidden transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="pc-btn-1 group relative flex-1 py-4 sm:py-[18px] rounded-2xl font-black text-sm sm:text-[15px] tracking-[0.18em] uppercase overflow-hidden transition-all duration-500 hover:-translate-y-[2px] active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{
-                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                      border: '1px solid rgba(16,185,129,0.3)',
-                      boxShadow: '0 4px 20px rgba(5,150,105,0.25), inset 0 1px 0 rgba(255,255,255,0.1)'
+                      background: 'linear-gradient(160deg, #10b981 0%, #059669 40%, #047857 100%)',
+                      boxShadow: '0 8px 32px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -2px 0 rgba(0,0,0,0.15)',
+                      border: 'none',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 30px rgba(5,150,105,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.5)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(5,150,105,0.25), inset 0 1px 0 rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 12px 40px rgba(16,185,129,0.35), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15), 0 0 0 1px rgba(16,185,129,0.4)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -2px 0 rgba(0,0,0,0.15)'; }}
                   >
-                    {/* Hover shimmer */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"/>
-                    <span className="relative z-10 flex items-center justify-center gap-2 text-white">
+                    {/* Shimmer */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+                      <div className="absolute inset-0 w-1/2" style={{ background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%)', animation: 'shimmerSweep 2s ease-in-out infinite' }}/>
+                    </div>
+                    <span className="relative z-10 flex items-center justify-center gap-2.5 text-white">
                       {loading ? (
                         <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
                       ) : (
-                        <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        <svg className="w-[18px] h-[18px] transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
                       )}
-                      <span style={{ fontFamily: "'Georgia', serif" }}>{loading ? 'Processing...' : 'SOLD'}</span>
+                      <span style={{ fontFamily: "'Georgia', serif" }}>{loading ? 'Processing...' : 'Sold'}</span>
                     </span>
                   </button>
 
@@ -317,34 +297,33 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                   <button
                     onClick={handleUnsoldClick}
                     disabled={loading}
-                    className="pc-btn-2 group relative flex-1 py-3.5 sm:py-4 rounded-xl font-black text-sm sm:text-base tracking-[0.15em] overflow-hidden transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="pc-btn-2 group relative flex-1 py-4 sm:py-[18px] rounded-2xl font-black text-sm sm:text-[15px] tracking-[0.18em] uppercase overflow-hidden transition-all duration-500 hover:-translate-y-[2px] active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{
-                      background: 'linear-gradient(135deg, #be123c 0%, #9f1239 100%)',
-                      border: '1px solid rgba(239,68,68,0.3)',
-                      boxShadow: '0 4px 20px rgba(190,18,60,0.25), inset 0 1px 0 rgba(255,255,255,0.1)'
+                      background: 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3)',
+                      border: '1.5px solid rgba(255,255,255,0.1)',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 30px rgba(190,18,60,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.5)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(190,18,60,0.25), inset 0 1px 0 rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'; e.currentTarget.style.background = 'linear-gradient(160deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(239,68,68,0.15), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(239,68,68,0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3)'; }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"/>
-                    <span className="relative z-10 flex items-center justify-center gap-2 text-white">
+                    <span className="relative z-10 flex items-center justify-center gap-2.5 text-white/70 group-hover:text-red-300 transition-colors duration-300">
                       {loading ? (
                         <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
                       ) : (
-                        <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                        <svg className="w-[18px] h-[18px] transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                       )}
-                      <span style={{ fontFamily: "'Georgia', serif" }}>{loading ? 'Processing...' : 'UNSOLD'}</span>
+                      <span style={{ fontFamily: "'Georgia', serif" }}>{loading ? 'Processing...' : 'Unsold'}</span>
                     </span>
                   </button>
                 </div>
               ) : (
-                <div className="px-4 py-3 rounded-lg text-center" style={{
+                <div className="py-3 px-4 rounded-xl text-center" style={{
                   background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)'
+                  border: '1px solid rgba(255,255,255,0.06)'
                 }}>
-                  <p className="text-slate-500 text-xs flex items-center justify-center gap-1.5">
+                  <p className="text-white/30 text-xs tracking-wider uppercase flex items-center justify-center gap-1.5">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                    Viewer Mode — Watch Only
+                    Viewer Mode
                   </p>
                 </div>
               )}
