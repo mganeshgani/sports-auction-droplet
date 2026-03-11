@@ -114,8 +114,7 @@ exports.registerPlayer = async (req, res) => {
     let pendingUpload = false;
 
     if (!finalPhotoUrl && req.file) {
-      // File was sent directly — use placeholder, upload in background
-      finalPhotoUrl = 'https://placehold.co/400x400/e2e8f0/64748b?text=Photo+Uploading';
+      finalPhotoUrl = '';
       pendingUpload = true;
     }
 
@@ -725,7 +724,7 @@ exports.createPlayer = async (req, res) => {
     let pendingUpload = false;
 
     if (!photoUrl && req.file) {
-      photoUrl = 'https://via.placeholder.com/400x400?text=' + encodeURIComponent(name.charAt(0));
+      photoUrl = '';
       pendingUpload = true;
     } else if (!photoUrl) {
       photoUrl = '';
