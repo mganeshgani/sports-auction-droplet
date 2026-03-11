@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Team, Player } from '../types';
 import { initializeSocket } from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 import { resultsService, clearCache, getStaleCached } from '../services/api';
 import TeamCard from '../components/results/TeamCard';
 import { useDisplaySettings } from '../hooks/useDisplaySettings';
@@ -57,13 +58,13 @@ const ResultsPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error removing player from team:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to remove player from team';
-      alert(`Failed to remove player: ${errorMessage}`);
+      toast.error(`Failed to remove player: ${errorMessage}`);
     }
   }, [API_URL]);
 
   const handleChangeTeam = useCallback(async () => {
     if (!playerToChangeTeam || !newTeamId) {
-      alert('Please select a team');
+      toast.warning('Please select a team');
       return;
     }
 
@@ -87,7 +88,7 @@ const ResultsPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error changing player team:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to change player team';
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   }, [playerToChangeTeam, newTeamId, API_URL]);
 

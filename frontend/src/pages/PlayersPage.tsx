@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Player } from '../types';
 import { formatCurrency } from '../utils/formatters';
@@ -116,7 +117,7 @@ const PlayersPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error deleting player:', error);
       const errorMessage = error.response?.data?.error || 'Failed to delete player';
-      alert(errorMessage);
+      toast.error(errorMessage);
       // Revert on error
       clearCache();
       fetchPlayers(true);
@@ -205,7 +206,7 @@ const PlayersPage: React.FC = () => {
                   const isLimitReached = maxPlayers && currentPlayerCount >= maxPlayers;
                   
                   if (isLimitReached) {
-                    alert(`⚠️ Player Limit Reached!\n\nYou have reached your maximum player limit of ${maxPlayers}.\n\nCurrent: ${currentPlayerCount} / ${maxPlayers}\n\nPlease contact your administrator to increase your limit.`);
+                    toast.warning(`Player limit reached! You have ${currentPlayerCount}/${maxPlayers} players. Contact your administrator to increase the limit.`);
                     return;
                   }
                   setShowAddModal(true);

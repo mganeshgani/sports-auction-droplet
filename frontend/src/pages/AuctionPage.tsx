@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { playerService, teamService, getStaleCached, clearCache } from '../services/api';
 import { initializeSocket } from '../services/socket';
 import { useDisplaySettings } from '../hooks/useDisplaySettings';
+import { toast } from 'react-toastify';
 import '../maisonCelebration.css';
 
 const AuctionPage: React.FC = () => {
@@ -224,18 +225,29 @@ const AuctionPage: React.FC = () => {
     }
   }, [currentPlayer, soldAmount, teams, playSoldSound, fetchTeams, fetchAvailableCount]);
 
+  const [showUnsoldOverlay, setShowUnsoldOverlay] = useState(false);
+  const [unsoldPlayerName, setUnsoldPlayerName] = useState('');
+
   const handleMarkUnsold = useCallback(async () => {
     if (!currentPlayer) return;
+
+    const playerName = currentPlayer.name;
 
     try {
       clearCache();
       await playerService.markUnsold(currentPlayer._id);
+
+      // Show unsold overlay
+      setUnsoldPlayerName(playerName);
+      setShowUnsoldOverlay(true);
+      setTimeout(() => setShowUnsoldOverlay(false), 3000);
 
       setShowPlayer(false);
       setCurrentPlayer(null);
       // Don't decrement available count since player wasn't sold
     } catch (error) {
       console.error('Error marking player unsold:', error);
+      toast.error('Failed to mark player as unsold');
     }
   }, [currentPlayer]);
 
@@ -553,6 +565,68 @@ const AuctionPage: React.FC = () => {
           
         </div>
       )}
+
+      {/* UNSOLD PLAYER OVERLAY */}
+      {showUnsoldOverlay && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none" style={{ animation: 'unsoldFadeIn 0.3s ease-out' }}>
+          {/* Backdrop */}
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(ellipse at center, rgba(239, 68, 68, 0.15) 0%, rgba(0, 0, 0, 0.85) 70%)',
+            animation: 'unsoldFadeIn 0.3s ease-out'
+          }}></div>
+
+          {/* Content */}
+          <div className="relative text-center" style={{ animation: 'unsoldSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+            {/* Icon */}
+            <div className="mx-auto mb-4 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center" style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '2px solid rgba(239, 68, 68, 0.35)',
+              boxShadow: '0 0 40px rgba(239, 68, 68, 0.15)'
+            }}>
+              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+
+            {/* Label */}
+            <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-red-400/60 font-semibold mb-1">No Bids Received</p>
+
+            {/* UNSOLD text */}
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-3" style={{
+              background: 'linear-gradient(135deg, #fca5a5 0%, #ef4444 50%, #b91c1c 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.3))'
+            }}>UNSOLD</h1>
+
+            {/* Player name */}
+            <div className="px-6 py-2 rounded-lg inline-block" style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}>
+              <p className="text-sm sm:text-base text-slate-300 font-medium">{unsoldPlayerName}</p>
+            </div>
+
+            {/* Subtle line */}
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="w-8 h-px bg-red-500/30"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500/40"></div>
+              <div className="w-8 h-px bg-red-500/30"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes unsoldFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes unsoldSlideUp {
+          from { opacity: 0; transform: translateY(30px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
 
       <style>{`
         /* Scrollbar Styles */

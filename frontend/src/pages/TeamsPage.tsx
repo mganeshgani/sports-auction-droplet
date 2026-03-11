@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Team } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 import { teamService, clearCache, getStaleCached } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import ConfirmModal from '../components/ConfirmModal';
@@ -66,7 +67,7 @@ const TeamsPage: React.FC = () => {
       resetForm();
     } catch (error) {
       console.error('Error saving team:', error);
-      alert('Error saving team. Please try again.');
+      toast.error('Error saving team. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +84,7 @@ const TeamsPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error deleting team:', error);
       const errorMessage = error.response?.data?.error || 'Failed to delete team';
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   }, [API_URL, fetchTeams]);
 
@@ -123,11 +124,11 @@ const TeamsPage: React.FC = () => {
       setShowResetModal(false);
       
       // Optional: Show success message to user
-      alert('✅ Auction reset successfully! All teams and players have been deleted.');
+      toast.success('Auction reset successfully! All teams and players have been deleted.');
     } catch (error: any) {
       console.error('Error resetting auction:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
-      alert(`❌ Error resetting auction: ${errorMessage}`);
+      toast.error(`Error resetting auction: ${errorMessage}`);
     } finally {
       setResetting(false);
     }
@@ -203,7 +204,7 @@ const TeamsPage: React.FC = () => {
                 ? user.usage.totalTeams >= user.limits.maxTeams
                 : false;
               if (isLimitReached) {
-                alert(`⚠️ Team Limit Reached!\n\nYou have reached your maximum team limit of ${user?.limits?.maxTeams}.\n\nCurrent: ${user?.usage?.totalTeams} / ${user?.limits?.maxTeams}\n\nPlease contact your administrator to increase your limit.`);
+                toast.warning(`Team limit reached! You have ${user?.usage?.totalTeams}/${user?.limits?.maxTeams} teams. Contact your administrator to increase the limit.`);
                 return;
               }
               setShowAddModal(true);

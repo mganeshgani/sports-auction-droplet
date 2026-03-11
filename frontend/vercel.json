@@ -33,6 +33,10 @@
       "dest": "/manifest.json"
     },
     {
+      "src": "/site.webmanifest",
+      "dest": "/site.webmanifest"
+    },
+    {
       "src": "/logo(.*).png",
       "dest": "/logo$1.png"
     },

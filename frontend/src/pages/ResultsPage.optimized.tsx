@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Team, Player } from '../types';
 import { initializeSocket } from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 import { resultsService, clearCache } from '../services/api';
 import TeamCard from '../components/results/TeamCard';
 import PlayerCard from '../components/results/PlayerCard';
@@ -42,7 +43,7 @@ const ResultsPage: React.FC = () => {
       setSelectedTeam(null);
     } catch (error) {
       console.error('Error deleting player:', error);
-      alert('Error deleting player');
+      toast.error('Error deleting player');
     }
   }, [API_URL]);
 
@@ -56,18 +57,18 @@ const ResultsPage: React.FC = () => {
         : playerToChangeTeam.team;
       
       if (oldTeamId === newTeamId) {
-        alert('Selected team is same as current team');
+        toast.warning('Selected team is same as current team');
         return;
       }
 
       const newTeam = teams.find(t => t._id === newTeamId);
       if (newTeam) {
         if ((newTeam.filledSlots || 0) >= (newTeam.totalSlots || 0)) {
-          alert('New team has no available slots');
+          toast.warning('New team has no available slots');
           return;
         }
         if ((newTeam.remainingBudget || 0) < (playerToChangeTeam.soldAmount || 0)) {
-          alert('New team does not have enough budget');
+          toast.warning('New team does not have enough budget');
           return;
         }
       }
@@ -86,7 +87,7 @@ const ResultsPage: React.FC = () => {
       setSelectedTeam(null);
     } catch (error: any) {
       console.error('Error changing team:', error);
-      alert(error.response?.data?.error || 'Error changing team');
+      toast.error(error.response?.data?.error || 'Error changing team');
     }
   }, [playerToChangeTeam, newTeamId, teams, API_URL]);
 
