@@ -1,6 +1,6 @@
 const Team = require('../models/team.model');
 const Player = require('../models/player.model');
-const cloudinary = require('../config/cloudinary');
+const { saveImage } = require('../utils/localUpload');
 const { getTeamSummary } = require('../utils/teamSummary');
 
 // Create new team
@@ -19,24 +19,11 @@ exports.createTeam = async (req, res) => {
     const { name, totalSlots, budget } = req.body;
 
     // OPTIMIZED: Prepare upload promise but don't await yet
-    const uploadPromise = req.file ? new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'team-logos',
-          public_id: `team_${name}_${Date.now()}`,
-          resource_type: 'image',
-          transformation: [
-            { width: 200, height: 200, crop: 'limit', quality: 'auto:eco', fetch_format: 'webp' }
-          ],
-          eager_async: true, // Non-blocking transformations for max speed
-          invalidate: false
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result.secure_url);
-        }
-      );
-      uploadStream.end(req.file.buffer);
+    const uploadPromise = req.file ? saveImage(req.file.buffer, {
+      folder: 'team-logos',
+      width: 200,
+      height: 200,
+      fit: 'inside'
     }) : Promise.resolve('');
 
     // OPTIMIZED: Upload happens in parallel with team creation
@@ -120,24 +107,11 @@ exports.updateTeam = async (req, res) => {
     }
 
     // OPTIMIZED: Prepare logo upload promise (non-blocking)
-    const uploadPromise = req.file ? new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'team-logos',
-          public_id: `team_${name || team.name}_${Date.now()}`,
-          resource_type: 'image',
-          transformation: [
-            { width: 200, height: 200, crop: 'limit', quality: 'auto:eco', fetch_format: 'webp' }
-          ],
-          eager_async: true, // Non-blocking transformations
-          invalidate: false
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result.secure_url);
-        }
-      );
-      uploadStream.end(req.file.buffer);
+    const uploadPromise = req.file ? saveImage(req.file.buffer, {
+      folder: 'team-logos',
+      width: 200,
+      height: 200,
+      fit: 'inside'
     }) : Promise.resolve(null);
 
     // OPTIMIZED: Update fields and upload in parallel

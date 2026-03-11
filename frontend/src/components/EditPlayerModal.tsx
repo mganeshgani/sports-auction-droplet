@@ -105,7 +105,7 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ player, onClose, onSu
       };
       reader.readAsDataURL(file);
 
-      // Eagerly upload to Cloudinary immediately
+      // Eagerly upload photo immediately
       const token = localStorage.getItem('token');
       const uploadData = new FormData();
       uploadData.append('photo', file);

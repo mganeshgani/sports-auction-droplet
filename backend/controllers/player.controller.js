@@ -1,7 +1,7 @@
 const Player = require('../models/player.model');
 const Team = require('../models/team.model');
 const User = require('../models/user.model');
-const cloudinary = require('../config/cloudinary');
+const { saveImage } = require('../utils/localUpload');
 const mongoose = require('mongoose');
 
 // Generate next regNo using MongoDB aggregation (O(1) instead of O(N))
@@ -22,59 +22,42 @@ async function generateRegNo(auctioneerId) {
   return `P${String(maxNum + 1).padStart(4, '0')}`;
 }
 
-// Pre-upload a photo to Cloudinary (authenticated)
+// Pre-upload a photo (authenticated)
 exports.uploadPhoto = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No photo file provided' });
     }
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'auction-players',
-          public_id: `player_upload_${Date.now()}`,
-          resource_type: 'image',
-          transformation: [
-            { width: 600, height: 600, crop: 'limit', quality: 'auto:good', fetch_format: 'webp' }
-          ]
-        },
-        (error, result) => error ? reject(error) : resolve(result)
-      );
-      stream.end(req.file.buffer);
+    const url = await saveImage(req.file.buffer, {
+      folder: 'player-photos',
+      width: 600,
+      height: 600,
+      fit: 'inside'
     });
 
-    res.json({ url: result.secure_url });
+    res.json({ url });
   } catch (error) {
     console.error('Photo upload error:', error.message);
     res.status(500).json({ error: 'Photo upload failed' });
   }
 };
 
-// Pre-upload a photo to Cloudinary (public — no auth)
+// Pre-upload a photo (public — no auth)
 exports.uploadPhotoPublic = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No photo file provided' });
     }
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'auction-players',
-          public_id: `player_upload_${Date.now()}`,
-          resource_type: 'image',
-          transformation: [
-            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
-            { quality: 'auto:good', fetch_format: 'webp' }
-          ]
-        },
-        (error, result) => error ? reject(error) : resolve(result)
-      );
-      stream.end(req.file.buffer);
+    const url = await saveImage(req.file.buffer, {
+      folder: 'player-photos',
+      width: 400,
+      height: 400,
+      fit: 'cover'
     });
 
-    res.json({ url: result.secure_url });
+    res.json({ url });
   } catch (error) {
     console.error('Photo upload error:', error.message);
     res.status(500).json({ error: 'Photo upload failed' });
@@ -155,7 +138,7 @@ exports.registerPlayer = async (req, res) => {
       req.app.get('io').to(`auctioneer_${auctioneer._id}`).emit('playerAdded', player);
     }
 
-    // Return success immediately — don't make user wait for Cloudinary
+    // Return success immediately
     res.status(201).json({
       message: 'Player registered successfully',
       player,
@@ -164,22 +147,17 @@ exports.registerPlayer = async (req, res) => {
 
     // Upload image in background AFTER response is sent (only if not pre-uploaded)
     if (pendingUpload && req.file) {
-      const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
       (async () => {
         try {
-          const result = await uploadToCloudinary(req.file.buffer, {
-            folder: 'auction-players',
-            public_id: `player_${finalRegNo}_${Date.now()}`,
-            resource_type: 'image',
-            transformation: [
-              { width: 400, height: 400, crop: 'fill', gravity: 'face' },
-              { quality: 'auto:good', fetch_format: 'webp' }
-            ]
+          const url = await saveImage(req.file.buffer, {
+            folder: 'player-photos',
+            width: 400,
+            height: 400,
+            fit: 'cover'
           });
-          player.photoUrl = result.secure_url;
+          player.photoUrl = url;
           await player.save();
 
-          // Notify connected clients of the updated photo
           if (req.app.get('io')) {
             req.app.get('io').to(`auctioneer_${auctioneer._id}`).emit('playerUpdated', player.toObject());
           }
@@ -518,28 +496,15 @@ exports.updatePlayer = async (req, res) => {
     // Handle photo upload if provided
     if (req.file) {
       try {
-        const result = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            {
-              folder: 'auction-players',
-              public_id: `player_${player.regNo || playerId}_${Date.now()}`,
-              resource_type: 'image',
-              transformation: [
-                { width: 600, height: 600, crop: 'limit', quality: 'auto:good', fetch_format: 'webp' }
-              ],
-              eager_async: true,
-              invalidate: false
-            },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(req.file.buffer);
+        const url = await saveImage(req.file.buffer, {
+          folder: 'player-photos',
+          width: 600,
+          height: 600,
+          fit: 'inside'
         });
         
-        player.photoUrl = result.secure_url;
-        console.log('Photo updated:', result.secure_url);
+        player.photoUrl = url;
+        console.log('Photo updated:', url);
       } catch (uploadError) {
         console.error('Error uploading photo:', uploadError);
         return res.status(400).json({ 
@@ -799,52 +764,33 @@ exports.createPlayer = async (req, res) => {
     // Send immediate response
     res.status(201).json(player);
 
-    // Upload photo to Cloudinary in background only if not pre-uploaded
+    // Upload photo in background only if not pre-uploaded
     if (pendingUpload && req.file) {
       const auctioneerId = req.user._id;
       const playerId = player._id;
       const playerName = name;
       
-      // Wrap in async IIFE to catch unhandled rejections
       (async () => {
         try {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            {
-              folder: 'auction-players',
-              public_id: `player_${finalRegNo}_${Date.now()}`,
-              resource_type: 'image',
-              transformation: [
-                { width: 600, height: 600, crop: 'limit', quality: 'auto:good', fetch_format: 'webp' }
-              ],
-              eager_async: true,
-              invalidate: false,
-              timeout: 60000
-            },
-            async (error, result) => {
-              if (error) {
-                console.error(`❌ Upload failed for ${playerName}:`, error.message || error);
-                return;
-              }
-              
-              try {
-                const updatedPlayer = await Player.findById(playerId);
-                if (updatedPlayer) {
-                  updatedPlayer.photoUrl = result.secure_url;
-                  await updatedPlayer.save();
-                  
-                  if (io) {
-                    io.to(`auctioneer_${auctioneerId}`).emit('playerUpdated', updatedPlayer);
-                  }
-                  console.log(`✓ Photo uploaded for ${playerName}`);
-                }
-              } catch (err) {
-                console.error(`❌ Error updating photo for ${playerName}:`, err.message);
-              }
+          const url = await saveImage(req.file.buffer, {
+            folder: 'player-photos',
+            width: 600,
+            height: 600,
+            fit: 'inside'
+          });
+          
+          const updatedPlayer = await Player.findById(playerId);
+          if (updatedPlayer) {
+            updatedPlayer.photoUrl = url;
+            await updatedPlayer.save();
+            
+            if (io) {
+              io.to(`auctioneer_${auctioneerId}`).emit('playerUpdated', updatedPlayer);
             }
-          );
-          uploadStream.end(req.file.buffer);
+            console.log(`✓ Photo uploaded for ${playerName}`);
+          }
         } catch (err) {
-          console.error(`❌ Background upload error:`, err.message);
+          console.error(`❌ Background upload error for ${playerName}:`, err.message);
         }
       })().catch(err => console.error(`❌ Unhandled upload error:`, err.message));
     }

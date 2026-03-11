@@ -6,38 +6,9 @@ import TeamCard from '../components/auction/TeamCard';
 import TeamSelectionModal from '../components/auction/TeamSelectionModal';
 import { useAuth } from '../contexts/AuthContext';
 import { playerService, teamService, getStaleCached, clearCache } from '../services/api';
-import { initializeSocket, requestWakeLock } from '../services/socket';
+import { initializeSocket } from '../services/socket';
 import { useDisplaySettings } from '../hooks/useDisplaySettings';
 import '../maisonCelebration.css';
-
-// Connection status indicator component
-const ConnectionStatus: React.FC<{ isConnected: boolean; lastPing: number | null }> = ({ isConnected, lastPing }) => {
-  const latency = lastPing ? `${lastPing}ms` : '--';
-  
-  return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-md shadow-lg transition-all duration-300"
-      style={{
-        background: isConnected 
-          ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.15) 100%)'
-          : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.15) 100%)',
-        border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
-        boxShadow: isConnected 
-          ? '0 0 20px rgba(16, 185, 129, 0.2)' 
-          : '0 0 20px rgba(239, 68, 68, 0.2)'
-      }}
-    >
-      <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
-        style={{ boxShadow: isConnected ? '0 0 8px rgba(16, 185, 129, 0.8)' : '0 0 8px rgba(239, 68, 68, 0.8)' }}
-      />
-      <span className={`text-xs font-semibold ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-        {isConnected ? 'LIVE' : 'OFFLINE'}
-      </span>
-      {isConnected && lastPing && (
-        <span className="text-[10px] text-gray-400 ml-1">{latency}</span>
-      )}
-    </div>
-  );
-};
 
 const AuctionPage: React.FC = () => {
   const { isAuctioneer } = useAuth();
@@ -54,10 +25,6 @@ const AuctionPage: React.FC = () => {
   const [celebrationAmount, setCelebrationAmount] = useState<number>(0);
   const [celebrationTeamName, setCelebrationTeamName] = useState<string>('');
   const [hasAuctionStarted, setHasAuctionStarted] = useState(false);
-  
-  // Connection status state for long auction sessions
-  const [isConnected, setIsConnected] = useState(false);
-  const [lastPing, setLastPing] = useState<number | null>(null);
   
   // Display settings from shared hook (settings configured in Settings page)
   const { getEnabledFields } = useDisplaySettings();
@@ -104,26 +71,10 @@ const AuctionPage: React.FC = () => {
 
     fetchTeams();
     fetchAvailableCount();
-    
-    // Request wake lock to keep screen on during auction
-    requestWakeLock();
 
     // Setup Socket.io connection for real-time updates with auctioneer isolation
     const socket = initializeSocket();
     
-    // Update connection status
-    setIsConnected(socket.connected);
-
-    socket.on('connect', () => {
-      console.log('✓ Socket connected for auction page');
-      setIsConnected(true);
-    });
-    
-    // Handle heartbeat acknowledgment for latency tracking
-    socket.on('heartbeat_ack', (data: { latency: number }) => {
-      setLastPing(data.latency);
-    });
-
     socket.on('playerUpdated', (updatedPlayer: Player) => {
       // Update available count in-place based on status change
       if (updatedPlayer.status === 'sold' || updatedPlayer.status === 'unsold') {
@@ -150,21 +101,12 @@ const AuctionPage: React.FC = () => {
       setTeams(prevTeams => prevTeams.filter(t => t._id !== data.teamId));
     });
 
-    socket.on('disconnect', () => {
-      console.log('Socket.io disconnected');
-      setIsConnected(false);
-      setLastPing(null);
-    });
-
     return () => {
       // Properly clean up ALL socket listeners
-      socket.off('connect');
-      socket.off('heartbeat_ack');
       socket.off('playerUpdated');
       socket.off('teamUpdated');
       socket.off('teamCreated');
       socket.off('teamDeleted');
-      socket.off('disconnect');
     };
   }, [fetchTeams, fetchAvailableCount]);
 
@@ -299,9 +241,6 @@ const AuctionPage: React.FC = () => {
 
   return (
     <>
-      {/* Connection Status Indicator - Shows LIVE/OFFLINE status during auction */}
-      <ConnectionStatus isConnected={isConnected} lastPing={lastPing} />
-      
       <div className="h-full flex flex-col px-2 sm:px-4 py-2 sm:py-3 overflow-hidden" style={{
         background: 'linear-gradient(160deg, #000000 0%, #0a0a0a 25%, #1a1a1a 50%, #0f172a 75%, #1a1a1a 100%)',
         backgroundAttachment: 'fixed'

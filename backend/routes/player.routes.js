@@ -4,7 +4,7 @@ const multer = require('multer');
 const playerController = require('../controllers/player.controller');
 const { protect } = require('../middleware/auth.middleware');
 
-// Configure multer for photo upload (memory storage for Cloudinary)
+// Configure multer for photo upload (memory storage for processing)
 const photoUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -46,7 +46,7 @@ router.delete('/', playerController.deleteAllPlayers);
 // Get all players
 router.get('/', playerController.getAllPlayers);
 
-// Pre-upload photo to Cloudinary (returns URL immediately)
+// Pre-upload photo to local storage (returns URL immediately)
 router.post('/upload-photo', photoUpload.single('photo'), playerController.uploadPhoto);
 
 // Create player from admin panel (must be before /:playerId)

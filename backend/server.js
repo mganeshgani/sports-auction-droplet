@@ -19,12 +19,9 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  process.env.FRONTEND_URL, // Production frontend URL from environment
-  'https://neoauction.vercel.app',
-  'https://sports-auction.vercel.app',
-  'https://sports-auction-oc52.vercel.app',
-  'https://sports-auction-*.vercel.app',
-  'https://neoauction-*.vercel.app' // Allow Vercel preview deployments
+  process.env.FRONTEND_URL,
+  'https://sportsauction.me',
+  'https://www.sportsauction.me'
 ].filter(Boolean); // Remove undefined values
 
 // Shared CORS origin checker used by both Socket.io and Express
@@ -228,6 +225,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Cookie parser middleware
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+
+// Serve uploaded files statically
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(UPLOAD_DIR, {
+  maxAge: '7d',
+  immutable: true
+}));
 
 // MongoDB Connection with optimized settings for long auction sessions (1+ hour idle support)
 // Using MongoDB Atlas — transactions are supported via replica set

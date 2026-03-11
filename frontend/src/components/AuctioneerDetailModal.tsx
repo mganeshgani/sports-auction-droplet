@@ -165,7 +165,7 @@ This will PERMANENTLY DELETE ALL data for ${auctioneer.name}:
 ✗ ${auctioneer.usage.totalPlayers} Players (with photos)
 ✗ ${auctioneer.usage.totalTeams} Teams (with logos)
 ✗ All form configurations
-✗ All Cloudinary images
+✗ All uploaded images
 
 The auctioneer account will remain, but ALL their data will be GONE FOREVER.
 

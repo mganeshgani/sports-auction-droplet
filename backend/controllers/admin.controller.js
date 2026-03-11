@@ -2,7 +2,8 @@ const User = require('../models/user.model');
 const Player = require('../models/player.model');
 const Team = require('../models/team.model');
 const FormConfig = require('../models/formConfig.model');
-const cloudinary = require('../config/cloudinary');
+const fs = require('fs');
+const path = require('path');
 
 // @desc    Create new auctioneer account
 // @route   POST /api/admin/auctioneers/create
@@ -349,43 +350,42 @@ exports.resetAuctioneerData = async (req, res) => {
     const teams = await Team.find({ auctioneer: auctioneerId });
     console.log(`📋 Found ${teams.length} teams to delete`);
 
-    // 3. Delete all player photos from Cloudinary
+    // 3. Delete all local player photos
+    const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '..', 'uploads');
     let playerPhotosDeleted = 0;
     for (const player of players) {
-      if (player.photoUrl && player.photoUrl.includes('cloudinary.com')) {
+      if (player.photoUrl && player.photoUrl.includes('/uploads/')) {
         try {
-          // Extract public_id from Cloudinary URL
-          const urlParts = player.photoUrl.split('/');
-          const fileWithExt = urlParts[urlParts.length - 1];
-          const publicId = `auction-players/${fileWithExt.split('.')[0]}`;
-          
-          await cloudinary.uploader.destroy(publicId);
-          playerPhotosDeleted++;
+          const filename = player.photoUrl.split('/').pop();
+          const filePath = path.join(UPLOAD_DIR, 'player-photos', filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            playerPhotosDeleted++;
+          }
         } catch (error) {
           console.error(`⚠️ Failed to delete photo for player ${player.name}:`, error.message);
         }
       }
     }
-    console.log(`✅ Deleted ${playerPhotosDeleted} player photos from Cloudinary`);
+    console.log(`✅ Deleted ${playerPhotosDeleted} player photos`);
 
-    // 4. Delete all team logos from Cloudinary
+    // 4. Delete all local team logos
     let teamLogosDeleted = 0;
     for (const team of teams) {
-      if (team.logoUrl && team.logoUrl.includes('cloudinary.com')) {
+      if (team.logoUrl && team.logoUrl.includes('/uploads/')) {
         try {
-          // Extract public_id from Cloudinary URL
-          const urlParts = team.logoUrl.split('/');
-          const fileWithExt = urlParts[urlParts.length - 1];
-          const publicId = `auction-teams/${fileWithExt.split('.')[0]}`;
-          
-          await cloudinary.uploader.destroy(publicId);
-          teamLogosDeleted++;
+          const filename = team.logoUrl.split('/').pop();
+          const filePath = path.join(UPLOAD_DIR, 'team-logos', filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            teamLogosDeleted++;
+          }
         } catch (error) {
           console.error(`⚠️ Failed to delete logo for team ${team.name}:`, error.message);
         }
       }
     }
-    console.log(`✅ Deleted ${teamLogosDeleted} team logos from Cloudinary`);
+    console.log(`✅ Deleted ${teamLogosDeleted} team logos`);
 
     // 5. Delete all database records
     const [deletedPlayers, deletedTeams, deletedFormConfigs] = await Promise.all([
