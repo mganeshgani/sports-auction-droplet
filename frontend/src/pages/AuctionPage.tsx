@@ -25,6 +25,8 @@ const AuctionPage: React.FC = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationAmount, setCelebrationAmount] = useState<number>(0);
   const [celebrationTeamName, setCelebrationTeamName] = useState<string>('');
+  const [celebrationPlayerName, setCelebrationPlayerName] = useState<string>('');
+  const [celebrationTeamLogo, setCelebrationTeamLogo] = useState<string>('');
   const [hasAuctionStarted, setHasAuctionStarted] = useState(false);
   
   // Display settings from shared hook (settings configured in Settings page)
@@ -171,6 +173,8 @@ const AuctionPage: React.FC = () => {
     // OPTIMIZED: Show celebration immediately - before API calls
     setCelebrationAmount(soldAmount);
     setCelebrationTeamName(acquiredTeam?.name || 'Team');
+    setCelebrationPlayerName(currentPlayer.name);
+    setCelebrationTeamLogo(acquiredTeam?.logoUrl || '');
     setShowCelebration(true);
     playSoldSound();
 
@@ -494,75 +498,85 @@ const AuctionPage: React.FC = () => {
         </div>
       </div>
 
-      {/* � PROFESSIONAL LUXURY CELEBRATION OVERLAY � */}
+      {/* ULTRA-PREMIUM CELEBRATION OVERLAY */}
       {showCelebration && (
-        <div className="maison-celebration-overlay">
-          {/* Deep Luxury Backdrop */}
-          <div className="maison-backdrop"></div>
-          
-          {/* Radial Light Accent */}
-          <div className="maison-radial-light"></div>
+        <div className="cel-overlay">
+          {/* Deep black canvas */}
+          <div className="cel-backdrop"/>
 
-          <div className="maison-content-container">
-            
-            {/* Crown Emblem - Ultra Premium */}
-            <div className="maison-crown-emblem">
-              <div className="crown-outer-glow"></div>
-              <div className="crown-ring-1"></div>
-              <div className="crown-ring-2"></div>
-              <div className="crown-center">
-                <svg className="crown-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L15 8.5L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L9 8.5L12 2Z" />
-                </svg>
-              </div>
-            </div>
+          {/* Radial gold light source from center */}
+          <div className="cel-radial"/>
 
-            {/* Acquisition Typography */}
-            <div className="maison-heading-section">
-              <div className="maison-prestige-label">ACQUISITION COMPLETE</div>
-              <h1 className="maison-sold-text">SOLD</h1>
-            </div>
+          {/* Floating gold dust particles */}
+          <div className="cel-particles">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div key={i} className="cel-particle" style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 4}s`,
+                animationDuration: `${4 + Math.random() * 5}s`,
+              }}/>
+            ))}
+          </div>
 
-            {/* Team Acquisition Card - Hero Element */}
-            <div className="maison-team-card">
-              <div className="team-card-border"></div>
-              <div className="team-card-content">
-                <div className="team-label">ACQUIRED BY</div>
-                <div className="team-name">{celebrationTeamName}</div>
-              </div>
-              <div className="team-card-shimmer"></div>
-            </div>
+          {/* Horizontal gold light streak */}
+          <div className="cel-streak"/>
 
-            {/* Ornamental Separator */}
-            <div className="maison-separator">
-              <div className="separator-line"></div>
-              <div className="separator-jewel">◆</div>
-              <div className="separator-line"></div>
-            </div>
+          {/* ═══ MAIN CONTENT ═══ */}
+          <div className="cel-content">
 
-            {/* Premium Amount Display */}
-            <div className="maison-amount-display">
-              <div className="amount-prestige-bg"></div>
-              <div className="amount-content-wrapper">
-                <div className="amount-label-text">FINAL VALUATION</div>
-                <div className="amount-value-row">
-                  <span className="amount-currency">₹</span>
-                  <span className="amount-number">{celebrationAmount.toLocaleString('en-IN')}</span>
+            {/* Top: Crown + SOLD */}
+            <div className="cel-top">
+              <div className="cel-crown">
+                <div className="cel-crown-glow"/>
+                <div className="cel-crown-disc">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="cel-crown-svg">
+                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z"/>
+                    <path d="M19 19H5v-2h14v2z"/>
+                  </svg>
                 </div>
               </div>
-              <div className="amount-reflection"></div>
+              <div className="cel-label">ACQUISITION COMPLETE</div>
+              <h1 className="cel-sold">SOLD</h1>
+            </div>
+
+            {/* Center: Player name — the hero */}
+            <div className="cel-player-name">{celebrationPlayerName}</div>
+
+            {/* Bottom: Team + Amount in a prestige card */}
+            <div className="cel-prestige-card">
+              <div className="cel-card-shimmer"/>
+              <div className="cel-card-border"/>
+
+              <div className="cel-card-inner">
+                {/* Team section with logo */}
+                <div className="cel-team-section">
+                  <div className="cel-team-badge">
+                    {celebrationTeamLogo ? (
+                      <img src={celebrationTeamLogo} alt={celebrationTeamName} className="cel-team-logo"/>
+                    ) : (
+                      <div className="cel-team-initial">{celebrationTeamName.charAt(0)}</div>
+                    )}
+                  </div>
+                  <div className="cel-team-info">
+                    <div className="cel-micro-label">ACQUIRED BY</div>
+                    <div className="cel-team-name">{celebrationTeamName}</div>
+                  </div>
+                </div>
+
+                {/* Vertical gold separator */}
+                <div className="cel-vert-sep"/>
+
+                {/* Amount section */}
+                <div className="cel-amount-section">
+                  <div className="cel-micro-label">VALUATION</div>
+                  <div className="cel-amount">
+                    <span className="cel-rupee">₹</span>
+                    {celebrationAmount.toLocaleString('en-IN')}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Prestige Footer Signature */}
-          <div className="maison-prestige-footer">
-            <div className="prestige-divider"></div>
-            <div className="prestige-signature">MAISON DE PRESTIGE</div>
-          </div>
-
-          {/* Ambient Luxury Glow */}
-          <div className="maison-ambient-glow"></div>
-          
         </div>
       )}
 

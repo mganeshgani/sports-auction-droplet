@@ -210,291 +210,216 @@ Type "DELETE" to confirm this action.`;
 
   if (!isOpen) return null;
 
+  const statusColor = !auctioneer.isActive ? '#71717a' : isExpired(auctioneer.accessExpiry) ? '#f97316' : '#22c55e';
+  const statusLabel = !auctioneer.isActive ? 'Inactive' : isExpired(auctioneer.accessExpiry) ? 'Expired' : 'Active';
+  const maxP = auctioneer.limits.maxPlayers;
+  const maxT = auctioneer.limits.maxTeams;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-3xl max-h-[85vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
-        
-        {/* Header */}
-        <div className="flex-shrink-0 px-4 py-3 border-b border-slate-200 bg-white">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md">
-                {auctioneer.name.charAt(0).toUpperCase()}
+      <div className="relative w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ background: '#111114', border: '1px solid rgba(255,255,255,.07)' }}>
+
+        {/* ── Header ── */}
+        <div className="flex-shrink-0 p-5 sm:p-6 pb-0">
+          {/* Close */}
+          <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-zinc-500 hover:text-white hover:bg-white/10 transition-colors z-10">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+
+          {/* Profile row */}
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,.2), rgba(201,168,76,.08))', color: '#c9a84c', border: '1px solid rgba(201,168,76,.25)' }}>
+              {auctioneer.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-lg font-semibold text-white truncate">{auctioneer.name}</h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}30` }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusColor }} />
+                  {statusLabel}
+                </span>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">{auctioneer.name}</h2>
-                <p className="text-xs text-slate-600">{auctioneer.email}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  {!auctioneer.isActive ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">
-                      <span className="w-1 h-1 rounded-full bg-slate-500 mr-1"></span>
-                      Inactive
+              <p className="text-sm text-zinc-400 mt-0.5 truncate">{auctioneer.email}</p>
+              <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                <span>Joined {format(new Date(auctioneer.createdAt), 'MMM dd, yyyy')}</span>
+                {auctioneer.accessExpiry && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                    <span style={{ color: isExpired(auctioneer.accessExpiry) ? '#f97316' : undefined }}>
+                      {isExpired(auctioneer.accessExpiry) ? 'Expired' : 'Expires'} {format(new Date(auctioneer.accessExpiry), 'MMM dd, yyyy')}
                     </span>
-                  ) : isExpired(auctioneer.accessExpiry) ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700">
-                      <span className="w-1 h-1 rounded-full bg-orange-500 mr-1"></span>
-                      Expired
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">
-                      <span className="w-1 h-1 rounded-full bg-green-500 mr-1"></span>
-                      Active
-                    </span>
-                  )}
-                  {auctioneer.accessExpiry && (
-                    <span className="text-[10px] text-slate-500">
-                      • Expires {format(new Date(auctioneer.accessExpiry), 'MMM dd, yyyy')}
-                    </span>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+          </div>
+
+          {/* Stat cards row */}
+          <div className="grid grid-cols-4 gap-2 mt-5">
+            {[
+              { value: auctioneer.usage.totalPlayers, label: 'Players', sub: !maxP ? 'Unlimited' : `of ${maxP}`, color: '#c9a84c' },
+              { value: auctioneer.usage.totalTeams, label: 'Teams', sub: !maxT ? 'Unlimited' : `of ${maxT}`, color: '#a78bfa' },
+              { value: maxP ? `${Math.round(playersPercentage)}%` : '∞', label: 'Player Use', sub: maxP ? `${auctioneer.usage.totalPlayers}/${maxP}` : 'No limit', color: '#22c55e' },
+              { value: maxT ? `${Math.round(teamsPercentage)}%` : '∞', label: 'Team Use', sub: maxT ? `${auctioneer.usage.totalTeams}/${maxT}` : 'No limit', color: '#06b6d4' },
+            ].map((s) => (
+              <div key={s.label} className="text-center rounded-xl py-3 px-2" style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.05)' }}>
+                <div className="text-xl font-bold text-white">{s.value}</div>
+                <div className="text-[11px] font-medium mt-0.5" style={{ color: s.color }}>{s.label}</div>
+                <div className="text-[10px] text-zinc-600 mt-0.5">{s.sub}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="flex-shrink-0 px-4 py-2 bg-slate-50 border-b border-slate-200">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="text-center">
-              <div className="text-lg font-bold text-slate-900">{auctioneer.usage.totalPlayers}</div>
-              <div className="text-[10px] text-slate-600 mt-0.5">Players</div>
-              <div className="text-[10px] text-slate-500">
-                {auctioneer.limits.maxPlayers === 0 ? 'Unlimited' : `of ${auctioneer.limits.maxPlayers}`}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-slate-900">{auctioneer.usage.totalTeams}</div>
-              <div className="text-[10px] text-slate-600 mt-0.5">Teams</div>
-              <div className="text-[10px] text-slate-500">
-                {auctioneer.limits.maxTeams === 0 ? 'Unlimited' : `of ${auctioneer.limits.maxTeams}`}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">
-                {auctioneer.limits.maxPlayers === 0 ? '—' : `${Math.round(playersPercentage)}%`}
-              </div>
-              <div className="text-[10px] text-slate-600 mt-0.5">Player Usage</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">
-                {auctioneer.limits.maxTeams === 0 ? '—' : `${Math.round(teamsPercentage)}%`}
-              </div>
-              <div className="text-[10px] text-slate-600 mt-0.5">Team Usage</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex-shrink-0 px-4 border-b border-slate-200 bg-white">
-          <div className="py-2 text-xs font-semibold text-slate-900">
-            Complete Account Overview
-          </div>
-        </div>
-
-        {/* Scrollable Content - All Sections */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 pt-4 space-y-4" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(201,168,76,.3) transparent' }}>
+          {/* Alerts */}
           {error && (
-            <div className="mb-3 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
+            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.15)', color: '#f87171' }}>
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               {error}
             </div>
           )}
           {successMessage && (
-            <div className="mb-3 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-xs">
+            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm" style={{ background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.15)', color: '#4ade80' }}>
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               {successMessage}
             </div>
           )}
 
-          <div className="space-y-3">
-            {/* Account Information */}
-            <div className="bg-white rounded-lg border border-slate-200 p-3">
-              <h3 className="text-xs font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
-                <span className="text-sm">📋</span> Account Information
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-[10px] text-slate-600 mb-0.5">Email</p>
-                  <p className="text-xs text-slate-900">{auctioneer.email}</p>
+          {/* Usage bars */}
+          <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.05)' }}>
+            <h3 className="text-sm font-semibold text-white mb-3">Usage Overview</h3>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-sm text-zinc-400">Players</span>
+                  <span className="text-sm font-medium text-white">{auctioneer.usage.totalPlayers} <span className="text-zinc-500">/ {!maxP ? '∞' : maxP}</span></span>
                 </div>
-                <div>
-                  <p className="text-[10px] text-slate-600 mb-0.5">Status</p>
-                  <p className="text-xs text-slate-900">
-                    {!auctioneer.isActive ? 'Inactive' : isExpired(auctioneer.accessExpiry) ? 'Expired' : 'Active'}
-                  </p>
+                <div className="w-full rounded-full h-2" style={{ background: 'rgba(255,255,255,.06)' }}>
+                  <div className="h-2 rounded-full transition-all duration-500" style={{ width: maxP ? `${Math.min(playersPercentage, 100)}%` : '100%', background: maxP ? '#c9a84c' : 'rgba(201,168,76,.3)' }} />
                 </div>
-                {auctioneer.accessExpiry && (
-                  <div>
-                    <p className="text-[10px] text-slate-600 mb-0.5">Access Expires</p>
-                    <p className="text-xs text-slate-900">
-                      {format(new Date(auctioneer.accessExpiry), 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[10px] text-slate-600 mb-0.5">Member Since</p>
-                  <p className="text-xs text-slate-900">
-                    {format(new Date(auctioneer.createdAt), 'MMM dd, yyyy')}
-                  </p>
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-sm text-zinc-400">Teams</span>
+                  <span className="text-sm font-medium text-white">{auctioneer.usage.totalTeams} <span className="text-zinc-500">/ {!maxT ? '∞' : maxT}</span></span>
+                </div>
+                <div className="w-full rounded-full h-2" style={{ background: 'rgba(255,255,255,.06)' }}>
+                  <div className="h-2 rounded-full transition-all duration-500" style={{ width: maxT ? `${Math.min(teamsPercentage, 100)}%` : '100%', background: maxT ? '#a78bfa' : 'rgba(167,139,250,.3)' }} />
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Usage Details */}
-            <div className="bg-white rounded-lg border border-slate-200 p-3">
-              <h3 className="text-xs font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
-                <span className="text-sm">📊</span> Usage Details
-              </h3>
-              <div className="space-y-2">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs text-slate-700">Player Slots</span>
-                    <span className="text-xs font-semibold text-slate-900">
-                      {auctioneer.usage.totalPlayers} / {auctioneer.limits.maxPlayers === 0 ? '∞' : auctioneer.limits.maxPlayers}
-                    </span>
-                  </div>
-                  {auctioneer.limits.maxPlayers > 0 && (
-                    <div className="w-full bg-slate-200 rounded-full h-1.5">
-                      <div
-                        className="bg-blue-600 h-1.5 rounded-full transition-all"
-                        style={{ width: `${Math.min(playersPercentage, 100)}%` }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs text-slate-700">Team Slots</span>
-                    <span className="text-xs font-semibold text-slate-900">
-                      {auctioneer.usage.totalTeams} / {auctioneer.limits.maxTeams === 0 ? '∞' : auctioneer.limits.maxTeams}
-                    </span>
-                  </div>
-                  {auctioneer.limits.maxTeams > 0 && (
-                    <div className="w-full bg-slate-200 rounded-full h-1.5">
-                      <div
-                        className="bg-blue-600 h-1.5 rounded-full transition-all"
-                        style={{ width: `${Math.min(teamsPercentage, 100)}%` }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
+          {/* Two-column: Resource Limits + Access */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Resource Limits */}
-            <div className="bg-white rounded-lg border border-slate-200 p-3">
-              <h3 className="text-xs font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
-                <span className="text-sm">⚙️</span> Resource Limits
+            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.05)' }}>
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" /></svg>
+                Limits
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-[10px] font-medium text-slate-700 mb-1">
-                    Max Players (0 = unlimited)
-                  </label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Max Players</label>
                   <input
-                    type="number"
-                    value={maxPlayers || 0}
-                    onChange={(e) => setMaxPlayers(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
+                    type="number" value={maxPlayers || 0} onChange={(e) => setMaxPlayers(Number(e.target.value))} min="0"
+                    className="w-full px-3 py-2 text-sm rounded-lg text-white placeholder-zinc-600 focus:outline-none transition-colors"
+                    style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.08)' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'rgba(201,168,76,.4)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,.08)'; }}
                   />
+                  <p className="text-[10px] text-zinc-600 mt-1">0 = unlimited</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-slate-700 mb-1">
-                    Max Teams (0 = unlimited)
-                  </label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Max Teams</label>
                   <input
-                    type="number"
-                    value={maxTeams || 0}
-                    onChange={(e) => setMaxTeams(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
+                    type="number" value={maxTeams || 0} onChange={(e) => setMaxTeams(Number(e.target.value))} min="0"
+                    className="w-full px-3 py-2 text-sm rounded-lg text-white placeholder-zinc-600 focus:outline-none transition-colors"
+                    style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.08)' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'rgba(201,168,76,.4)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,.08)'; }}
                   />
+                  <p className="text-[10px] text-zinc-600 mt-1">0 = unlimited</p>
                 </div>
                 <button
-                  onClick={handleUpdateLimits}
-                  disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+                  onClick={handleUpdateLimits} disabled={loading}
+                  className="w-full py-2 px-3 rounded-lg text-sm font-medium text-black disabled:opacity-50 transition-all hover:brightness-110"
+                  style={{ background: '#c9a84c' }}
                 >
-                  {loading ? 'Updating...' : 'Update Limits'}
+                  {loading ? 'Saving...' : 'Save Limits'}
                 </button>
               </div>
             </div>
 
             {/* Access Management */}
-            <div className="bg-white rounded-lg border border-slate-200 p-3">
-              <h3 className="text-xs font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
-                <span className="text-sm">🔑</span> Access Management
+            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.05)' }}>
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
+                Access
               </h3>
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-[10px] font-medium text-slate-700 mb-1">
-                    Access Duration (days, 0 = unlimited)
-                  </label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Duration (days)</label>
                   <input
-                    type="number"
-                    value={accessDays}
-                    onChange={(e) => setAccessDays(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    min="0"
-                    placeholder="e.g., 30, 60, 90"
+                    type="number" value={accessDays} onChange={(e) => setAccessDays(Number(e.target.value))} min="0" placeholder="30"
+                    className="w-full px-3 py-2 text-sm rounded-lg text-white placeholder-zinc-600 focus:outline-none transition-colors"
+                    style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.08)' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'rgba(34,197,94,.4)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,.08)'; }}
                   />
+                  <p className="text-[10px] text-zinc-600 mt-1">0 = unlimited access</p>
                 </div>
                 <button
-                  onClick={handleGrantAccess}
-                  disabled={loading}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+                  onClick={handleGrantAccess} disabled={loading}
+                  className="w-full py-2 px-3 rounded-lg text-sm font-medium disabled:opacity-50 transition-all hover:brightness-110"
+                  style={{ background: 'rgba(34,197,94,.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,.2)' }}
                 >
-                  {accessDays > 0 ? `Grant ${accessDays} Days Access` : 'Grant Unlimited Access'}
+                  {accessDays > 0 ? `Grant ${accessDays} Days` : 'Grant Unlimited'}
                 </button>
                 <button
-                  onClick={() => setRevokeConfirm(true)}
-                  disabled={loading}
-                  className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+                  onClick={() => setRevokeConfirm(true)} disabled={loading}
+                  className="w-full py-2 px-3 rounded-lg text-sm font-medium disabled:opacity-50 transition-all hover:brightness-110"
+                  style={{ background: 'rgba(249,115,22,.1)', color: '#fb923c', border: '1px solid rgba(249,115,22,.15)' }}
                 >
                   Revoke Access
                 </button>
               </div>
             </div>
+          </div>
 
-            {/* Danger Zone */}
-            <div className="bg-red-50 rounded-lg border border-red-200 p-3">
-              <h3 className="text-xs font-semibold text-red-900 mb-2 flex items-center gap-1.5">
-                <span className="text-sm">⚠️</span> Danger Zone
-              </h3>
-              <div className="space-y-1.5">
-                <button
-                  onClick={handleResetData}
-                  disabled={loading}
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
-                >
-                  Reset All Data
-                </button>
-                <button
-                  onClick={() => setDeleteConfirm(true)}
-                  disabled={loading}
-                  className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
-                >
-                  Delete Account
-                </button>
-              </div>
+          {/* Danger Zone */}
+          <div className="rounded-xl p-4" style={{ background: 'rgba(239,68,68,.03)', border: '1px solid rgba(239,68,68,.1)' }}>
+            <h3 className="text-sm font-semibold flex items-center gap-2 mb-1" style={{ color: '#f87171' }}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+              Danger Zone
+            </h3>
+            <p className="text-xs text-zinc-500 mb-3">These actions are irreversible. Please be certain.</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={handleResetData} disabled={loading}
+                className="flex-1 py-2 px-3 rounded-lg text-sm font-medium disabled:opacity-50 transition-all hover:brightness-125"
+                style={{ background: 'rgba(234,179,8,.1)', color: '#facc15', border: '1px solid rgba(234,179,8,.15)' }}
+              >
+                Reset All Data
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(true)} disabled={loading}
+                className="flex-1 py-2 px-3 rounded-lg text-sm font-medium disabled:opacity-50 transition-all hover:brightness-125"
+                style={{ background: 'rgba(239,68,68,.1)', color: '#f87171', border: '1px solid rgba(239,68,68,.15)' }}
+              >
+                Delete Account
+              </button>
             </div>
           </div>
         </div>
       </div>
+
       <ConfirmModal
         open={revokeConfirm}
         title="Revoke Access?"

@@ -18,8 +18,8 @@ const ResultsPage: React.FC = () => {
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [playerToChangeTeam, setPlayerToChangeTeam] = useState<Player | null>(null);
   const [newTeamId, setNewTeamId] = useState<string>('');
-  const [showUnsoldPlayers, setShowUnsoldPlayers] = useState(false);
-  const [showAvailablePlayers, setShowAvailablePlayers] = useState(false);
+  const [showTop3Modal, setShowTop3Modal] = useState(false);
+
   
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
   
@@ -370,9 +370,19 @@ const ResultsPage: React.FC = () => {
     URL.revokeObjectURL(link.href);
   }, [teamsWithPlayers, players, enabledFields]);
 
-  // Unsold and available players
-  const unsoldPlayers = useMemo(() => players.filter(p => p.status === 'unsold'), [players]);
-  const availablePlayers = useMemo(() => players.filter(p => p.status === 'available'), [players]);
+  // Top 3 highest-sold players
+  const top3Players = useMemo(() => {
+    const teamMap = new Map(teams.map(t => [t._id, t]));
+    return players
+      .filter(p => p.status === 'sold' && (p.soldAmount || 0) > 0)
+      .sort((a, b) => (b.soldAmount || 0) - (a.soldAmount || 0))
+      .slice(0, 3)
+      .map(p => ({
+        ...p,
+        teamName: teamMap.get(p.team as string)?.name || '',
+        teamLogo: teamMap.get(p.team as string)?.logoUrl || '',
+      }));
+  }, [players, teams]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{
@@ -405,6 +415,15 @@ const ResultsPage: React.FC = () => {
                 <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#10b981' }}></div>
                 <span className="text-[10px] sm:text-xs font-bold text-emerald-400">LIVE</span>
               </div>
+              {top3Players.length > 0 && (
+                <button
+                  onClick={() => setShowTop3Modal(true)}
+                  className="mvp-btn group"
+                >
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z"/><path d="M19 19H5v-2h14v2z"/></svg>
+                  <span>MVP</span>
+                </button>
+              )}
               {!loading && teams.length > 0 && (
                 <button
                   onClick={exportCSV}
@@ -563,80 +582,6 @@ const ResultsPage: React.FC = () => {
               />
             ))}
           </div>
-
-          {/* Unsold Players Section */}
-          {unsoldPlayers.length > 0 && (
-            <div className="mt-4 rounded-xl overflow-hidden" style={{
-              background: 'rgba(0,0,0,0.4)',
-              border: '1px solid rgba(239, 68, 68, 0.15)',
-            }}>
-              <button
-                onClick={() => setShowUnsoldPlayers(!showUnsoldPlayers)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-red-400">✗</span>
-                  <span className="text-sm font-semibold text-slate-300">Unsold Players</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">{unsoldPlayers.length}</span>
-                </div>
-                <span className={`text-slate-500 transition-transform ${showUnsoldPlayers ? 'rotate-180' : ''}`}>▼</span>
-              </button>
-              {showUnsoldPlayers && (
-                <div className="px-4 pb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {unsoldPlayers.map((p) => (
-                    <div key={p._id} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                      {p.photoUrl ? (
-                        <img src={p.photoUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 flex-shrink-0">👤</div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-slate-300 truncate">{p.name}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{p.position || 'No position'}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Available Players Section */}
-          {availablePlayers.length > 0 && (
-            <div className="mt-3 rounded-xl overflow-hidden" style={{
-              background: 'rgba(0,0,0,0.4)',
-              border: '1px solid rgba(212, 175, 55, 0.15)',
-            }}>
-              <button
-                onClick={() => setShowAvailablePlayers(!showAvailablePlayers)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-amber-400">●</span>
-                  <span className="text-sm font-semibold text-slate-300">Available (Not Yet Auctioned)</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">{availablePlayers.length}</span>
-                </div>
-                <span className={`text-slate-500 transition-transform ${showAvailablePlayers ? 'rotate-180' : ''}`}>▼</span>
-              </button>
-              {showAvailablePlayers && (
-                <div className="px-4 pb-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {availablePlayers.map((p) => (
-                    <div key={p._id} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                      {p.photoUrl ? (
-                        <img src={p.photoUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 flex-shrink-0">👤</div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-slate-300 truncate">{p.name}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{p.position || 'No position'}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 
@@ -1241,8 +1186,406 @@ const ResultsPage: React.FC = () => {
         </div>
       )}
 
+      {/* ═══ TOP 3 MVP MODAL ═══ */}
+      {showTop3Modal && (
+        <div className="mvp-overlay" onClick={() => setShowTop3Modal(false)}>
+          <div className="mvp-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Background FX */}
+            <div className="mvp-bg-radial" />
+            <div className="mvp-bg-streak" />
+            <div className="mvp-particles">
+              {Array.from({ length: 16 }).map((_, i) => (
+                <div key={i} className="mvp-particle" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 5}s`, animationDuration: `${5 + Math.random() * 6}s` }} />
+              ))}
+            </div>
+
+            {/* Close */}
+            <button className="mvp-close" onClick={() => setShowTop3Modal(false)}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            {/* Header */}
+            <div className="mvp-header">
+              <div className="mvp-crown">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z"/><path d="M19 19H5v-2h14v2z"/></svg>
+              </div>
+              <h2 className="mvp-title">MOST VALUABLE PLAYERS</h2>
+              <div className="mvp-title-sep" />
+              <p className="mvp-subtitle">The highest-valued acquisitions of the auction</p>
+            </div>
+
+            {/* Cards — podium order: #2, #1, #3 */}
+            <div className="mvp-podium">
+              {[1, 0, 2].map((orderIdx) => {
+                const p = top3Players[orderIdx];
+                if (!p) return null;
+                const rank = orderIdx + 1;
+                const isChampion = rank === 1;
+                const medals: Record<number, { bg: string; border: string; text: string; glow: string; label: string; ring: string }> = {
+                  1: { bg: 'rgba(212,175,55,.06)', border: 'rgba(212,175,55,.35)', text: '#c9a84c', glow: 'rgba(212,175,55,.18)', label: '#1', ring: 'linear-gradient(135deg, #c9a84c, #f0d770, #c9a84c)' },
+                  2: { bg: 'rgba(192,192,192,.04)', border: 'rgba(192,192,192,.22)', text: '#b8b8b8', glow: 'rgba(192,192,192,.1)', label: '#2', ring: 'linear-gradient(135deg, #b0b0b0, #d8d8d8, #b0b0b0)' },
+                  3: { bg: 'rgba(205,127,50,.04)', border: 'rgba(205,127,50,.22)', text: '#cd7f32', glow: 'rgba(205,127,50,.1)', label: '#3', ring: 'linear-gradient(135deg, #cd7f32, #e8a854, #cd7f32)' },
+                };
+                const m = medals[rank];
+                return (
+                  <div
+                    key={p._id}
+                    className={`mvp-card ${isChampion ? 'mvp-champion' : ''}`}
+                    style={{
+                      '--mvp-border': m.border,
+                      '--mvp-bg': m.bg,
+                      '--mvp-glow': m.glow,
+                      '--mvp-accent': m.text,
+                      '--mvp-ring': m.ring,
+                      order: rank === 1 ? 1 : rank === 2 ? 0 : 2,
+                    } as React.CSSProperties}
+                  >
+                    <div className="mvp-card-shimmer" />
+                    <div className="mvp-card-border-glow" />
+
+                    {/* Rank */}
+                    <div className="mvp-rank" style={{ color: m.text, borderColor: m.border, background: m.bg }}>{m.label}</div>
+
+                    {/* Photo with decorative ring */}
+                    <div className="mvp-photo-ring" style={{ background: m.ring }}>
+                      <div className="mvp-photo-inner">
+                        {p.photoUrl ? (
+                          <img src={p.photoUrl} alt={p.name} className="mvp-photo" />
+                        ) : (
+                          <div className="mvp-photo-fallback" style={{ color: m.text }}>{p.name.charAt(0)}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Name */}
+                    <h3 className="mvp-name">{p.name}</h3>
+
+                    {/* Position */}
+                    {p.position && (
+                      <div className="mvp-position" style={{ color: m.text, borderColor: m.border }}>{p.position.toUpperCase()}</div>
+                    )}
+
+                    {/* Sold amount — hero */}
+                    <div className="mvp-amount" style={{ color: m.text }}>
+                      <span className="mvp-rupee">₹</span>{(p.soldAmount || 0).toLocaleString('en-IN')}
+                    </div>
+
+                    {/* Valuation label */}
+                    <div className="mvp-val-label">VALUATION</div>
+
+                    {/* Team */}
+                    <div className="mvp-team-row">
+                      {p.teamLogo ? (
+                        <img src={p.teamLogo} alt={p.teamName} className="mvp-team-logo" />
+                      ) : (
+                        <div className="mvp-team-initial" style={{ color: m.text, borderColor: m.border }}>{p.teamName.charAt(0)}</div>
+                      )}
+                      <span className="mvp-team-name">{p.teamName}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Premium Scrollbar Styles */}
       <style>{`
+        /* ═══ MVP BUTTON ═══ */
+        .mvp-btn {
+          display: flex; align-items: center; gap: 4px;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          border: 1px solid rgba(201,168,76,.35);
+          background: rgba(201,168,76,.08);
+          color: #c9a84c;
+          font-family: 'Georgia', serif;
+          font-size: 10px;
+          letter-spacing: 2px;
+          cursor: pointer;
+          transition: all .25s;
+        }
+        .mvp-btn:hover {
+          background: rgba(201,168,76,.15);
+          border-color: rgba(201,168,76,.55);
+          box-shadow: 0 0 18px rgba(201,168,76,.15);
+          transform: translateY(-1px);
+        }
+
+        /* ═══ MVP OVERLAY ═══ */
+        .mvp-overlay {
+          position: fixed; inset: 0; z-index: 9999;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(0,0,0,.92);
+          backdrop-filter: blur(12px);
+          animation: mvpFadeIn .3s ease-out;
+        }
+        @keyframes mvpFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .mvp-modal {
+          position: relative;
+          width: 95%; max-width: 880px;
+          max-height: 92vh;
+          overflow-y: auto;
+          padding: 40px 24px 32px;
+          border-radius: 20px;
+          border: 1px solid rgba(201,168,76,.15);
+          background: #060504;
+          box-shadow: 0 0 80px rgba(0,0,0,.6), 0 0 40px rgba(201,168,76,.06);
+          animation: mvpSlideUp .4s ease-out;
+        }
+        @keyframes mvpSlideUp {
+          from { opacity: 0; transform: translateY(30px) scale(.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* BG FX */
+        .mvp-bg-radial {
+          position: absolute; inset: 0; border-radius: 20px;
+          background: radial-gradient(ellipse 60% 50% at 50% 25%, rgba(201,168,76,.07) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .mvp-bg-streak {
+          position: absolute; top: 48%; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(201,168,76,.2), transparent);
+          pointer-events: none;
+        }
+        .mvp-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: 20px; }
+        .mvp-particle {
+          position: absolute; bottom: -2px;
+          width: 2px; height: 2px;
+          background: rgba(201,168,76,.5);
+          border-radius: 50%;
+          animation: mvpFloat linear infinite;
+        }
+        @keyframes mvpFloat {
+          0%   { transform: translateY(0); opacity: 0; }
+          10%  { opacity: .6; }
+          90%  { opacity: .15; }
+          100% { transform: translateY(-70vh); opacity: 0; }
+        }
+
+        /* Close */
+        .mvp-close {
+          position: absolute; top: 14px; right: 14px; z-index: 5;
+          width: 32px; height: 32px; border-radius: 50%;
+          border: 1px solid rgba(201,168,76,.15);
+          background: rgba(201,168,76,.04);
+          color: rgba(201,168,76,.5);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: all .25s;
+        }
+        .mvp-close:hover {
+          border-color: rgba(201,168,76,.4); color: #c9a84c;
+          transform: rotate(90deg);
+        }
+
+        /* Header */
+        .mvp-header {
+          position: relative; z-index: 1;
+          text-align: center;
+          margin-bottom: 32px;
+        }
+        .mvp-crown {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 48px; height: 48px; border-radius: 50%;
+          border: 1.5px solid rgba(201,168,76,.3);
+          background: rgba(201,168,76,.06);
+          color: #c9a84c;
+          margin-bottom: 14px;
+          box-shadow: 0 0 30px rgba(201,168,76,.1);
+          animation: mvpCrownPulse 3s ease-in-out infinite;
+        }
+        @keyframes mvpCrownPulse {
+          0%,100% { box-shadow: 0 0 20px rgba(201,168,76,.08); }
+          50%     { box-shadow: 0 0 40px rgba(201,168,76,.18); }
+        }
+        .mvp-title {
+          font-family: 'Georgia', serif;
+          font-size: 18px; letter-spacing: 6px;
+          color: #c9a84c; margin: 0;
+        }
+        .mvp-title-sep {
+          width: 60px; height: 1px; margin: 10px auto;
+          background: linear-gradient(90deg, transparent, rgba(201,168,76,.4), transparent);
+        }
+        .mvp-subtitle {
+          font-family: 'Georgia', serif;
+          font-size: 11px; color: rgba(255,255,255,.3);
+          letter-spacing: 1px; margin: 0;
+        }
+
+        /* ═══ PODIUM ═══ */
+        .mvp-podium {
+          position: relative; z-index: 1;
+          display: flex; justify-content: center; align-items: flex-end;
+          gap: 20px;
+        }
+
+        /* ═══ CARD ═══ */
+        .mvp-card {
+          position: relative;
+          display: flex; flex-direction: column; align-items: center;
+          width: 220px;
+          padding: 28px 18px 20px;
+          border-radius: 16px;
+          border: 1px solid var(--mvp-border);
+          background: var(--mvp-bg);
+          overflow: hidden;
+          transition: transform .35s, box-shadow .35s;
+        }
+        .mvp-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 12px 40px var(--mvp-glow);
+        }
+        .mvp-champion {
+          width: 260px;
+          padding: 36px 22px 24px;
+          border-width: 1.5px;
+        }
+
+        .mvp-card-shimmer {
+          position: absolute; inset: 0;
+          background: linear-gradient(105deg, transparent 38%, rgba(201,168,76,.04) 46%, rgba(201,168,76,.08) 50%, rgba(201,168,76,.04) 54%, transparent 62%);
+          background-size: 260% 100%;
+          animation: mvpShimmer 5s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @keyframes mvpShimmer {
+          0%   { background-position: 160% 0; }
+          100% { background-position: -60% 0; }
+        }
+
+        .mvp-card-border-glow {
+          position: absolute; inset: -1px; border-radius: 17px;
+          background: linear-gradient(160deg, var(--mvp-glow), transparent 35%, transparent 65%, var(--mvp-glow));
+          pointer-events: none; z-index: 0;
+        }
+
+        /* Rank */
+        .mvp-rank {
+          position: absolute; top: 10px; right: 12px;
+          font-family: 'Georgia', serif;
+          font-size: 12px; letter-spacing: 1px;
+          padding: 3px 10px; border-radius: 6px;
+          border: 1px solid; z-index: 2;
+        }
+        .mvp-champion .mvp-rank {
+          font-size: 14px; padding: 4px 12px;
+        }
+
+        /* Photo ring */
+        .mvp-photo-ring {
+          width: 86px; height: 86px;
+          border-radius: 50%;
+          padding: 3px;
+          margin-bottom: 14px;
+          flex-shrink: 0;
+          position: relative; z-index: 1;
+        }
+        .mvp-champion .mvp-photo-ring {
+          width: 108px; height: 108px;
+          padding: 3.5px;
+        }
+        .mvp-photo-inner {
+          width: 100%; height: 100%;
+          border-radius: 50%; overflow: hidden;
+          background: #0a0806;
+        }
+        .mvp-photo {
+          width: 100%; height: 100%; object-fit: cover;
+        }
+        .mvp-photo-fallback {
+          width: 100%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Georgia', serif; font-size: 32px;
+        }
+        .mvp-champion .mvp-photo-fallback { font-size: 40px; }
+
+        /* Name */
+        .mvp-name {
+          font-family: 'Georgia', serif;
+          font-size: 15px; color: #fff;
+          letter-spacing: 1px; text-align: center;
+          margin: 0 0 6px;
+          max-width: 100%; white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis;
+          position: relative; z-index: 1;
+        }
+        .mvp-champion .mvp-name { font-size: 18px; letter-spacing: 1.5px; }
+
+        /* Position */
+        .mvp-position {
+          font-family: 'Georgia', serif;
+          font-size: 8px; letter-spacing: 2.5px;
+          padding: 2px 10px; border-radius: 4px;
+          border: 1px solid; margin-bottom: 14px;
+          position: relative; z-index: 1;
+        }
+
+        /* Amount */
+        .mvp-amount {
+          font-family: 'Georgia', serif;
+          font-size: 28px; font-weight: 400;
+          letter-spacing: 1px;
+          text-shadow: 0 0 20px var(--mvp-glow);
+          margin-bottom: 2px;
+          position: relative; z-index: 1;
+        }
+        .mvp-champion .mvp-amount { font-size: 36px; }
+        .mvp-rupee { font-size: 20px; margin-right: 3px; opacity: .7; }
+        .mvp-champion .mvp-rupee { font-size: 26px; }
+
+        .mvp-val-label {
+          font-family: 'Georgia', serif;
+          font-size: 8px; letter-spacing: 3px;
+          color: rgba(255,255,255,.2);
+          margin-bottom: 14px;
+          position: relative; z-index: 1;
+        }
+
+        /* Team */
+        .mvp-team-row {
+          display: flex; align-items: center; gap: 7px;
+          position: relative; z-index: 1;
+        }
+        .mvp-team-logo {
+          width: 22px; height: 22px; border-radius: 6px; object-fit: cover;
+        }
+        .mvp-team-initial {
+          width: 22px; height: 22px; border-radius: 6px;
+          border: 1px solid; background: rgba(0,0,0,.3);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Georgia', serif; font-size: 10px;
+        }
+        .mvp-team-name {
+          font-family: 'Georgia', serif;
+          font-size: 12px; color: rgba(255,255,255,.4);
+          letter-spacing: .5px;
+        }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 840px) {
+          .mvp-podium {
+            flex-direction: column; align-items: center; gap: 16px;
+          }
+          .mvp-card, .mvp-champion {
+            width: 100% !important; max-width: 320px;
+            order: unset !important;
+          }
+          .mvp-champion { padding: 28px 18px 20px; }
+          .mvp-photo-ring, .mvp-champion .mvp-photo-ring {
+            width: 76px !important; height: 76px !important;
+          }
+          .mvp-photo-fallback, .mvp-champion .mvp-photo-fallback { font-size: 28px !important; }
+          .mvp-amount, .mvp-champion .mvp-amount { font-size: 24px !important; }
+          .mvp-rupee, .mvp-champion .mvp-rupee { font-size: 18px !important; }
+          .mvp-name, .mvp-champion .mvp-name { font-size: 14px !important; }
+          .mvp-title { font-size: 14px; letter-spacing: 4px; }
+          .mvp-modal { padding: 32px 16px 24px; }
+        }
+
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
           height: 6px;

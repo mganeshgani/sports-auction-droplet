@@ -1,158 +1,46 @@
 import React from 'react';
 
 const AdminSettings: React.FC = () => {
+  const features = [
+    { label: 'General Settings', desc: 'Platform name, timezone, and preferences', color: '#c9a84c', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.38.138.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
+    { label: 'Email Configuration', desc: 'SMTP settings and email templates', color: '#22c55e', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg> },
+    { label: 'Security', desc: 'Password policies and authentication', color: '#a78bfa', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg> },
+    { label: 'Backup & Restore', desc: 'Database backup and recovery options', color: '#f97316', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125v-3.75" /></svg> },
+    { label: 'Appearance', desc: 'Theme customization and branding', color: '#ec4899', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" /></svg> },
+    { label: 'Notifications', desc: 'Configure system notifications', color: '#06b6d4', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg> },
+  ];
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
+    <div className="space-y-6 pb-8">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 sm:mb-1">System Settings</h1>
-        <p className="text-slate-400 text-sm">Configure and manage platform settings</p>
+        <h1 className="text-xl sm:text-2xl font-semibold text-white">System Settings</h1>
+        <p className="text-zinc-500 text-sm mt-1">Configure and manage platform settings</p>
       </div>
 
-      {/* Coming Soon Card */}
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 sm:p-12">
-        <div className="max-w-2xl mx-auto text-center space-y-4 sm:space-y-6">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Settings Coming Soon</h2>
-            <p className="text-slate-400 text-sm sm:text-lg mb-4 sm:mb-6">
-              We're building a comprehensive settings panel to give you full control over your platform.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left">
-            <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-700">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-0.5 sm:mb-1 text-sm">General Settings</h3>
-                  <p className="text-xs sm:text-sm text-slate-500">Platform name, timezone, and preferences</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-700">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-0.5 sm:mb-1 text-sm">Email Configuration</h3>
-                  <p className="text-xs sm:text-sm text-slate-500">SMTP settings and email templates</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-700">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-0.5 sm:mb-1 text-sm">Security Settings</h3>
-                  <p className="text-xs sm:text-sm text-slate-500">Password policies and authentication</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-700">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-0.5 sm:mb-1 text-sm">Backup & Restore</h3>
-                  <p className="text-xs sm:text-sm text-slate-500">Database backup and recovery options</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-700">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-0.5 sm:mb-1 text-sm">Appearance</h3>
-                  <p className="text-xs sm:text-sm text-slate-500">Theme customization and branding</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-700">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-cyan-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-0.5 sm:mb-1 text-sm">Notifications</h3>
-                  <p className="text-xs sm:text-sm text-slate-500">Configure system notifications</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 sm:pt-6">
-            <p className="text-xs sm:text-sm text-slate-500">
-              This feature is currently in development. Check back soon!
-            </p>
-          </div>
+      <div className="rounded-xl p-6 sm:p-10 text-center" style={{ background: '#0f0f12', border: '1px solid rgba(255,255,255,.06)' }}>
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.15)' }}>
+          <svg className="w-7 h-7" style={{ color: '#c9a84c' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.38.138.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         </div>
+        <h2 className="text-lg sm:text-xl font-semibold text-white mb-1.5">Settings Coming Soon</h2>
+        <p className="text-sm text-zinc-500 mb-6 max-w-md mx-auto">We're building a comprehensive settings panel to give you full control over your platform.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-left max-w-3xl mx-auto">
+          {features.map((f) => (
+            <div key={f.label} className="rounded-lg p-3.5 transition-colors" style={{ background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)' }}>
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${f.color}12`, color: f.color }}>
+                  {f.icon}
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-white mb-0.5">{f.label}</h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed">{f.desc}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-zinc-600 mt-6">This feature is currently in development.</p>
       </div>
     </div>
   );
