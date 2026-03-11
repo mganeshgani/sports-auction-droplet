@@ -196,7 +196,7 @@ const TeamsPage: React.FC = () => {
 
           {/* Add Team Button - Only for Auctioneers */}
           {isAuctioneer && (
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => {
               const isLimitReached = user?.limits?.maxTeams && user?.usage?.totalTeams
@@ -208,25 +208,53 @@ const TeamsPage: React.FC = () => {
               }
               setShowAddModal(true);
             }}
-            className="group px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-1 sm:gap-2 flex-1 sm:flex-initial justify-center"
+            className="group flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-initial"
             style={{
-              background: 'linear-gradient(135deg, #D4AF37 0%, #F0D770 50%, #D4AF37 100%)',
-              border: '2px solid rgba(212, 175, 55, 0.5)',
-              boxShadow: '0 4px 20px rgba(212, 175, 55, 0.4)',
-              color: '#000000'
+              background: 'rgba(212, 175, 55, 0.12)',
+              color: '#fcd34d',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
+              backdropFilter: 'blur(8px)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(212, 175, 55, 0.22)';
+              e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.12)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <span className="text-base sm:text-xl group-hover:rotate-90 transition-transform duration-300">+</span>
+            <svg className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             <span>Add Team</span>
           </button>
 
           {/* Reset Auction Button */}
           <button
             onClick={() => setShowResetModal(true)}
-            className="group px-3 sm:px-5 py-1.5 sm:py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-red-500/50 flex items-center gap-1 sm:gap-2 flex-1 sm:flex-initial justify-center"
+            className="group flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-initial"
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#fca5a5',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              backdropFilter: 'blur(8px)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.45)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.12)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
             title="Reset entire auction (delete all data)"
           >
-            <svg className="w-3 h-3 sm:w-4 sm:h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             <span>Reset</span>

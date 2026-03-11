@@ -210,51 +210,53 @@ const PlayersPage: React.FC = () => {
                   }
                   setShowAddModal(true);
                 }}
-                className="group relative flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-300 overflow-hidden flex-1 sm:flex-none"
+                className="group relative flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-semibold rounded-lg transition-all duration-200 flex-1 sm:flex-none"
                 style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)',
-                  color: 'white',
-                  border: '1.5px solid rgba(16, 185, 129, 0.5)',
-                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3), 0 0 30px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  color: '#6ee7b7',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  backdropFilter: 'blur(8px)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px) scale(1.03)';
-                  e.currentTarget.style.boxShadow = '0 6px 24px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.22)';
+                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.45)';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.15)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.3), 0 0 30px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:translate-x-full transition-transform duration-700 ease-out" style={{ transform: 'translateX(-100%)' }}></div>
-                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span className="relative z-10 tracking-wide">Add Player</span>
+                <span className="tracking-wide">Add Player</span>
               </button>
               <Link
                 to="/form-builder"
-                className="group relative flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-300 overflow-hidden flex-1 sm:flex-none"
+                className="group relative flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-semibold rounded-lg transition-all duration-200 flex-1 sm:flex-none"
                 style={{
-                  background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
-                  color: '#1e293b',
-                  border: '1.5px solid rgba(251, 191, 36, 0.6)',
-                  boxShadow: '0 4px 16px rgba(251, 191, 36, 0.4), 0 0 30px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                  background: 'rgba(212, 175, 55, 0.1)',
+                  color: '#fcd34d',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  backdropFilter: 'blur(8px)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px) scale(1.03)';
-                  e.currentTarget.style.boxShadow = '0 6px 24px rgba(251, 191, 36, 0.6), 0 0 40px rgba(251, 191, 36, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.45)';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.12)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(251, 191, 36, 0.4), 0 0 30px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.background = 'rgba(212, 175, 55, 0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.25)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:translate-x-full transition-transform duration-700 ease-out" style={{ transform: 'translateX(-100%)' }}></div>
-                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                <span className="relative z-10 tracking-wide">Form Builder</span>
+                <span className="tracking-wide">Form Builder</span>
               </Link>
               <RegistrationLinkGenerator />
             </div>

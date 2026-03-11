@@ -113,24 +113,27 @@ const RegistrationLinkGenerator: React.FC<RegistrationLinkGeneratorProps> = ({ o
     <div className="flex items-center gap-1.5 sm:gap-2">
       <button
         onClick={copyToClipboard}
-        className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all shadow-lg"
+        className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200"
         style={{
           background: copied 
-            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-            : 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
-          color: '#1e293b',
-          border: `1px solid ${copied ? 'rgba(16, 185, 129, 0.3)' : 'rgba(251, 191, 36, 0.3)'}`
+            ? 'rgba(16, 185, 129, 0.15)'
+            : 'rgba(99, 102, 241, 0.1)',
+          color: copied ? '#6ee7b7' : '#a5b4fc',
+          border: `1px solid ${copied ? 'rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.25)'}`,
+          backdropFilter: 'blur(8px)'
         }}
         onMouseEnter={(e) => {
           if (!copied) {
-            e.currentTarget.style.transform = 'scale(1.05)';
-            e.currentTarget.style.boxShadow = '0 8px 25px rgba(217, 119, 6, 0.4)';
+            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)';
+            e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.45)';
+            e.currentTarget.style.boxShadow = '0 0 20px rgba(99, 102, 241, 0.12)';
           }
         }}
         onMouseLeave={(e) => {
           if (!copied) {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.25)';
+            e.currentTarget.style.boxShadow = 'none';
           }
         }}
       >
@@ -146,19 +149,22 @@ const RegistrationLinkGenerator: React.FC<RegistrationLinkGeneratorProps> = ({ o
       </button>
       <button
         onClick={shareViaWhatsApp}
-        className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all shadow-lg"
+        className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200"
         style={{
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          color: '#ffffff',
-          border: '1px solid rgba(16, 185, 129, 0.3)'
+          background: 'rgba(34, 197, 94, 0.1)',
+          color: '#86efac',
+          border: '1px solid rgba(34, 197, 94, 0.25)',
+          backdropFilter: 'blur(8px)'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-          e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.4)';
+          e.currentTarget.style.background = 'rgba(34, 197, 94, 0.2)';
+          e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.45)';
+          e.currentTarget.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.12)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+          e.currentTarget.style.background = 'rgba(34, 197, 94, 0.1)';
+          e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.25)';
+          e.currentTarget.style.boxShadow = 'none';
         }}
       >
         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
