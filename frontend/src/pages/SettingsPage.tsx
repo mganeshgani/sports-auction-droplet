@@ -30,7 +30,6 @@ const SettingsPage: React.FC = () => {
     toggleSetting, 
     getSelectedCount, 
     getSelectableFields, 
-    getEnabledFields,
     highPriorityField,
     setHighPriority,
     loading: displayLoading 
