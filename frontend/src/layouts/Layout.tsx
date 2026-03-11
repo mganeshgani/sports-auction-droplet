@@ -70,6 +70,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     };
     fetchBranding();
   }, [API_URL]);
+
+  // Listen for branding updates from Settings page
+  useEffect(() => {
+    const handleBrandingUpdate = () => {
+      setBranding(getCachedBranding());
+    };
+    window.addEventListener('brandingUpdated', handleBrandingUpdate);
+    return () => window.removeEventListener('brandingUpdated', handleBrandingUpdate);
+  }, []);
   
   const navigation = [
     { name: 'Auction', href: '/auction' },

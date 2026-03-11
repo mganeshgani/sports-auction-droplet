@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import { useDisplaySettings, MAX_SELECTABLE_ITEMS, getFieldIcon } from '../hooks/useDisplaySettings';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -71,15 +72,27 @@ const SettingsPage: React.FC = () => {
         submitData.append('logo', logoFile);
       }
 
-      await axios.put(`${API_URL}/config`, submitData, {
+      const response = await axios.put(`${API_URL}/config`, submitData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Settings saved successfully! Please refresh the page to see changes.');
+      // Update branding cache so Layout picks it up instantly
+      if (response.data?.data?.branding) {
+        const b = response.data.data.branding;
+        localStorage.setItem('brandingConfig', JSON.stringify({
+          title: b.title || 'SPORTS AUCTION',
+          subtitle: b.subtitle || '',
+          logoUrl: b.logoUrl || '/logo.png'
+        }));
+        sessionStorage.removeItem('brandingFetched');
+        window.dispatchEvent(new Event('brandingUpdated'));
+      }
+
+      toast.success('Settings saved successfully!');
       fetchConfig();
     } catch (error) {
       console.error('Error saving config:', error);
-      alert('Error saving settings');
+      toast.error('Error saving settings');
     } finally {
       setSaving(false);
     }
@@ -90,14 +103,27 @@ const SettingsPage: React.FC = () => {
   const handleReset = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/config`, {
+      const response = await axios.delete(`${API_URL}/config`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert('Settings reset successfully! Please refresh the page.');
+
+      // Update branding cache with reset defaults
+      if (response.data?.data?.branding) {
+        const b = response.data.data.branding;
+        localStorage.setItem('brandingConfig', JSON.stringify({
+          title: b.title || 'SPORTS AUCTION',
+          subtitle: b.subtitle || '',
+          logoUrl: b.logoUrl || '/logo.png'
+        }));
+        sessionStorage.removeItem('brandingFetched');
+        window.dispatchEvent(new Event('brandingUpdated'));
+      }
+
+      toast.success('Settings reset to defaults!');
       fetchConfig();
     } catch (error) {
       console.error('Error resetting config:', error);
-      alert('Error resetting settings');
+      toast.error('Error resetting settings');
     }
   };
 
