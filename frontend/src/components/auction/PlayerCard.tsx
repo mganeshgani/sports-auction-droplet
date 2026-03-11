@@ -103,8 +103,8 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes haloBreath {
-          0%, 100% { box-shadow: 0 0 50px rgba(201,168,76,0.12), 0 0 100px rgba(201,168,76,0.05), 0 30px 100px rgba(0,0,0,0.7); }
-          50%      { box-shadow: 0 0 80px rgba(201,168,76,0.22), 0 0 150px rgba(201,168,76,0.08), 0 30px 100px rgba(0,0,0,0.6); }
+          0%, 100% { box-shadow: 0 0 70px rgba(201,168,76,0.2), 0 0 140px rgba(201,168,76,0.08), 0 30px 100px rgba(0,0,0,0.7); }
+          50%      { box-shadow: 0 0 120px rgba(201,168,76,0.35), 0 0 200px rgba(201,168,76,0.14), 0 30px 100px rgba(0,0,0,0.5); }
         }
         @keyframes borderGlow {
           0%, 100% { opacity: 0.25; }
@@ -132,8 +132,24 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
           50%      { transform: translate(25px, 35px) scale(1.15); opacity: 0.4; }
         }
         @keyframes photoGlow {
-          0%, 100% { box-shadow: 0 16px 50px rgba(0,0,0,0.5), 0 0 40px ${positionColors.light}12; }
-          50%      { box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 60px ${positionColors.light}22; }
+          0%, 100% { box-shadow: 0 16px 50px rgba(0,0,0,0.5), 0 0 50px ${positionColors.light}25, 0 0 100px ${positionColors.light}10; }
+          50%      { box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 80px ${positionColors.light}38, 0 0 140px ${positionColors.light}18; }
+        }
+        @keyframes floatingRing {
+          0%   { transform: rotate(0deg) scale(1); opacity: 0.15; }
+          50%  { transform: rotate(180deg) scale(1.08); opacity: 0.3; }
+          100% { transform: rotate(360deg) scale(1); opacity: 0.15; }
+        }
+        @keyframes starFloat {
+          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.2; }
+          25%  { transform: translateY(-15px) rotate(90deg); opacity: 0.5; }
+          50%  { transform: translateY(-5px) rotate(180deg); opacity: 0.3; }
+          75%  { transform: translateY(-20px) rotate(270deg); opacity: 0.6; }
+        }
+        @keyframes cometTrail {
+          0%   { transform: translate(-100%, -100%) rotate(45deg); opacity: 0; }
+          10%  { opacity: 0.7; }
+          100% { transform: translate(300%, 300%) rotate(45deg); opacity: 0; }
         }
         @keyframes particleDrift {
           0%   { transform: translateY(0) translateX(0) scale(0); opacity: 0; }
@@ -180,17 +196,20 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
         {/* ── ANIMATED MESH GRADIENT BACKGROUND ── */}
         <div className="absolute inset-0" style={{ background: '#060610' }}>
           {/* Orb 1 — top-right warm gold */}
-          <div className="absolute -top-24 -right-24 w-[26rem] h-[26rem] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.4) 0%, rgba(201,168,76,0.08) 40%, transparent 70%)', filter: 'blur(50px)', animation: 'orbFloat1 8s ease-in-out infinite' }} />
+          <div className="absolute -top-24 -right-24 w-[30rem] h-[30rem] rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.55) 0%, rgba(201,168,76,0.12) 40%, transparent 70%)', filter: 'blur(45px)', animation: 'orbFloat1 8s ease-in-out infinite' }} />
           {/* Orb 2 — bottom-left position color */}
-          <div className="absolute -bottom-28 -left-28 w-[30rem] h-[30rem] rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(circle, ${positionColors.light}30 0%, ${positionColors.dark}10 40%, transparent 70%)`, filter: 'blur(60px)', animation: 'orbFloat2 10s ease-in-out infinite' }} />
+          <div className="absolute -bottom-28 -left-28 w-[34rem] h-[34rem] rounded-full pointer-events-none"
+            style={{ background: `radial-gradient(circle, ${positionColors.light}45 0%, ${positionColors.dark}18 40%, transparent 70%)`, filter: 'blur(55px)', animation: 'orbFloat2 10s ease-in-out infinite' }} />
           {/* Orb 3 — center deep violet */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[34rem] h-[34rem] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(100,70,180,0.14) 0%, rgba(60,40,130,0.05) 40%, transparent 70%)', filter: 'blur(70px)', animation: 'orbFloat3 12s ease-in-out infinite' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[38rem] h-[38rem] rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(100,70,180,0.22) 0%, rgba(60,40,130,0.08) 40%, transparent 70%)', filter: 'blur(65px)', animation: 'orbFloat3 12s ease-in-out infinite' }} />
           {/* Orb 4 — top-left warm bleed */}
-          <div className="absolute -top-12 -left-12 w-72 h-72 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(234,179,8,0.1) 0%, transparent 60%)', filter: 'blur(40px)', animation: 'orbFloat3 14s ease-in-out 2s infinite' }} />
+          <div className="absolute -top-12 -left-12 w-80 h-80 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(234,179,8,0.16) 0%, transparent 60%)', filter: 'blur(35px)', animation: 'orbFloat3 14s ease-in-out 2s infinite' }} />
+          {/* Orb 5 — center-right emerald pulse */}
+          <div className="absolute top-1/3 -right-16 w-[22rem] h-[22rem] rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 60%)', filter: 'blur(50px)', animation: 'orbFloat1 16s ease-in-out 3s infinite' }} />
           {/* Noise grain texture */}
           <div className="absolute inset-0 opacity-[0.04]" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
@@ -205,9 +224,30 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
         </div>
 
         {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/4 w-1 h-1 rounded-full bg-amber-400/40 z-10 pointer-events-none" style={{ animation: 'particleDrift 4s ease-out infinite' }} />
-        <div className="absolute top-1/3 right-1/3 w-0.5 h-0.5 rounded-full bg-amber-300/30 z-10 pointer-events-none" style={{ animation: 'particleDrift 5s ease-out 1.5s infinite' }} />
-        <div className="absolute bottom-1/3 right-1/4 w-1 h-1 rounded-full bg-amber-400/30 z-10 pointer-events-none" style={{ animation: 'particleDrift 6s ease-out 3s infinite' }} />
+        <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 rounded-full bg-amber-400/50 z-10 pointer-events-none" style={{ animation: 'particleDrift 4s ease-out infinite' }} />
+        <div className="absolute top-1/3 right-1/3 w-1 h-1 rounded-full bg-amber-300/40 z-10 pointer-events-none" style={{ animation: 'particleDrift 5s ease-out 1.5s infinite' }} />
+        <div className="absolute bottom-1/3 right-1/4 w-1.5 h-1.5 rounded-full bg-amber-400/40 z-10 pointer-events-none" style={{ animation: 'particleDrift 6s ease-out 3s infinite' }} />
+        <div className="absolute top-[15%] right-[15%] w-1 h-1 rounded-full bg-yellow-300/30 z-10 pointer-events-none" style={{ animation: 'particleDrift 7s ease-out 0.5s infinite' }} />
+        <div className="absolute bottom-[20%] left-[35%] w-1 h-1 rounded-full bg-amber-200/30 z-10 pointer-events-none" style={{ animation: 'particleDrift 5.5s ease-out 2.5s infinite' }} />
+
+        {/* Moving stars */}
+        <div className="absolute top-[10%] left-[60%] w-2 h-2 z-10 pointer-events-none" style={{ animation: 'starFloat 6s ease-in-out infinite' }}>
+          <svg viewBox="0 0 24 24" fill="rgba(201,168,76,0.3)" className="w-full h-full"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        </div>
+        <div className="absolute bottom-[15%] right-[10%] w-1.5 h-1.5 z-10 pointer-events-none" style={{ animation: 'starFloat 8s ease-in-out 2s infinite' }}>
+          <svg viewBox="0 0 24 24" fill="rgba(201,168,76,0.25)" className="w-full h-full"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        </div>
+        <div className="absolute top-[45%] left-[8%] w-1.5 h-1.5 z-10 pointer-events-none" style={{ animation: 'starFloat 7s ease-in-out 4s infinite' }}>
+          <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.15)" className="w-full h-full"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        </div>
+
+        {/* Comet trail */}
+        <div className="absolute top-0 left-0 w-20 h-[2px] z-10 pointer-events-none overflow-visible" style={{ animation: 'cometTrail 8s ease-in 3s infinite' }}>
+          <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.6), rgba(201,168,76,0.1))' }}/>
+        </div>
+
+        {/* Floating ring */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] rounded-full z-[5] pointer-events-none" style={{ border: '1px solid rgba(201,168,76,0.06)', animation: 'floatingRing 20s linear infinite' }} />
 
         {/* CARD CONTENT */}
         <div className="relative z-10 p-6 sm:p-8 lg:p-10">
@@ -216,9 +256,9 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
             {/* ── LEFT: Photo Only ── */}
             <div className="pc-photo relative flex-shrink-0">
               {/* Multi-layer glow behind photo */}
-              <div className="absolute -inset-5 rounded-[24px]" style={{
-                background: `conic-gradient(from 200deg, ${positionColors.light}22, rgba(201,168,76,0.18), ${positionColors.dark}15, rgba(201,168,76,0.22), ${positionColors.light}22)`,
-                filter: 'blur(18px)',
+              <div className="absolute -inset-6 rounded-[26px]" style={{
+                background: `conic-gradient(from 200deg, ${positionColors.light}35, rgba(201,168,76,0.3), ${positionColors.dark}25, rgba(201,168,76,0.35), ${positionColors.light}35)`,
+                filter: 'blur(22px)',
                 animation: 'borderGlow 3.5s ease-in-out infinite',
               }}/>
               {/* Gradient border frame */}
@@ -234,9 +274,6 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                   loading="lazy"
                   className="w-48 h-56 sm:w-56 sm:h-[17rem] md:w-60 md:h-[18rem] lg:w-64 lg:h-[20rem] object-cover"
                 />
-                {/* Bottom cinematic fade */}
-                <div className="absolute inset-x-0 bottom-0 h-1/3"
-                  style={{ background: 'linear-gradient(to top, rgba(6,6,16,0.9), transparent)' }} />
               </div>
             </div>
 
@@ -244,14 +281,15 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
             <div className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 w-full min-w-0">
 
               {/* Player Name */}
-              <div className="pc-content text-center lg:text-left">
-                <h1 className="text-4xl sm:text-5xl md:text-[3.25rem] lg:text-[3.5rem] font-black leading-[1.06] tracking-tight"
+              <div className="pc-content text-center lg:text-left overflow-hidden">
+                <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-[3rem] font-black leading-[1.1] tracking-tight break-words"
                   style={{
                     background: 'linear-gradient(140deg, #ffffff 0%, #f0e4c8 25%, #c9a84c 50%, #f5e6b8 75%, #ffffff 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 3px 16px rgba(201,168,76,0.35))',
-                    fontFamily: "'Georgia', 'Times New Roman', serif"
+                    fontFamily: "'Georgia', 'Times New Roman', serif",
+                    wordBreak: 'break-word'
                   }}>
                   {player.name}
                 </h1>
