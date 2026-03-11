@@ -229,11 +229,26 @@ const UnsoldPage: React.FC = () => {
       ) : unsoldPlayers.length === 0 ? (
         <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
           <div className="text-center max-w-md">
-            <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/30">
-              <span className="text-3xl sm:text-5xl">🎉</span>
+            {/* Premium Icon */}
+            <div className="relative w-20 h-20 sm:w-28 sm:h-28 mx-auto mb-5 sm:mb-7">
+              <div className="absolute inset-0 rounded-2xl" style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.03) 100%)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                boxShadow: '0 0 40px rgba(16, 185, 129, 0.06)'
+              }}></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-10 h-10 sm:w-14 sm:h-14" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="16" stroke="rgba(16, 185, 129, 0.45)" strokeWidth="1.5" fill="rgba(16, 185, 129, 0.06)"/>
+                  <path d="M16 24L22 30L33 18" stroke="rgba(16, 185, 129, 0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+              </div>
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">All Players Sold!</h3>
-            <p className="text-gray-400 text-sm sm:text-base">Great job! No unsold players remaining.</p>
+            <h3 className="text-xl sm:text-2xl font-bold mb-2" style={{
+              background: 'linear-gradient(135deg, #FFFFFF 0%, #10B981 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>All Players Sold!</h3>
+            <p className="text-gray-500 text-sm sm:text-base leading-relaxed">No unsold players remaining.</p>
           </div>
         </div>
       ) : (

@@ -344,17 +344,30 @@ const PlayersPage: React.FC = () => {
       ) : filteredPlayers.length === 0 ? (
         <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
           <div className="text-center max-w-md">
-            <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 rounded-full flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(240, 215, 112, 0.2) 100%)',
-              border: '2px solid rgba(212, 175, 55, 0.4)',
-              boxShadow: '0 0 30px rgba(212, 175, 55, 0.3)'
-            }}>
-              <span className="text-3xl sm:text-5xl">🏐</span>
+            {/* Premium Icon */}
+            <div className="relative w-20 h-20 sm:w-28 sm:h-28 mx-auto mb-5 sm:mb-7">
+              <div className="absolute inset-0 rounded-2xl" style={{
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.03) 100%)',
+                border: '1px solid rgba(212, 175, 55, 0.2)',
+                boxShadow: '0 0 40px rgba(212, 175, 55, 0.08)'
+              }}></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-10 h-10 sm:w-14 sm:h-14" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="18" r="10" stroke="rgba(212, 175, 55, 0.5)" strokeWidth="1.5" fill="rgba(212, 175, 55, 0.06)"/>
+                  <path d="M12 40c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="rgba(212, 175, 55, 0.5)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                  <line x1="32" y1="14" x2="38" y2="14" stroke="rgba(212, 175, 55, 0.35)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="35" y1="11" x2="35" y2="17" stroke="rgba(212, 175, 55, 0.35)" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+            <h3 className="text-xl sm:text-2xl font-bold mb-2" style={{
+              background: 'linear-gradient(135deg, #FFFFFF 0%, #D4AF37 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
               {filter === 'all' ? 'No Players Yet' : `No ${filter} Players`}
             </h3>
-            <p className="text-gray-400 text-sm sm:text-base">
+            <p className="text-gray-500 text-sm sm:text-base leading-relaxed">
               {filter === 'all' 
                 ? 'Share the registration link to add players to the auction.' 
                 : `No players with status "${filter}" found.`}

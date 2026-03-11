@@ -143,13 +143,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Logo Section */}
             <div className="flex items-center -ml-2">
               <div className="flex-shrink-0 flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center">
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0" style={{
+                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(26, 26, 26, 0.8) 100%)',
+                  border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                  boxShadow: '0 0 20px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                  padding: '3px'
+                }}>
                   <img 
                     src={branding.logoUrl || '/logo.png'} 
                     alt="Logo" 
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain rounded-lg"
                     onError={(e) => {
-                      // Fallback to lightning emoji if image fails to load
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                       const parent = target.parentElement;
@@ -157,7 +161,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         const fallback = document.createElement('span');
                         fallback.className = 'fallback-icon';
                         fallback.textContent = '⚡';
-                        fallback.style.fontSize = '24px';
+                        fallback.style.fontSize = '20px';
                         parent.appendChild(fallback);
                       }
                     }}

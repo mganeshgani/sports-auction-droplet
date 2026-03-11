@@ -254,22 +254,35 @@ const TeamsPage: React.FC = () => {
       ) : teams.length === 0 ? (
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center max-w-md">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(240, 215, 112, 0.2) 100%)',
-              border: '2px solid rgba(212, 175, 55, 0.4)',
-              boxShadow: '0 0 30px rgba(212, 175, 55, 0.3)'
-            }}>
-              <span className="text-5xl">🏆</span>
+            {/* Premium Icon */}
+            <div className="relative w-28 h-28 mx-auto mb-7">
+              <div className="absolute inset-0 rounded-2xl" style={{
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.03) 100%)',
+                border: '1px solid rgba(212, 175, 55, 0.2)',
+                boxShadow: '0 0 40px rgba(212, 175, 55, 0.08)'
+              }}></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-14 h-14" viewBox="0 0 48 48" fill="none">
+                  <path d="M14 18L24 8L34 18" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <rect x="11" y="18" width="26" height="18" rx="3" stroke="rgba(212, 175, 55, 0.5)" strokeWidth="1.5" fill="rgba(212, 175, 55, 0.06)"/>
+                  <circle cx="24" cy="27" r="5" stroke="rgba(212, 175, 55, 0.45)" strokeWidth="1.5" fill="rgba(212, 175, 55, 0.08)"/>
+                  <path d="M24 24.5V29.5M21.5 27H26.5" stroke="rgba(212, 175, 55, 0.4)" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+              </div>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">No Teams Yet</h3>
-            <p className="text-gray-400 mb-6">Get started by creating your first team!</p>
+            <h3 className="text-2xl font-bold mb-2" style={{
+              background: 'linear-gradient(135deg, #FFFFFF 0%, #D4AF37 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>No Teams Yet</h3>
+            <p className="text-gray-500 mb-7">Get started by creating your first team</p>
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg"
+              className="px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 hover:scale-105"
               style={{
                 background: 'linear-gradient(135deg, #D4AF37 0%, #F0D770 50%, #D4AF37 100%)',
-                border: '2px solid rgba(212, 175, 55, 0.5)',
-                boxShadow: '0 4px 20px rgba(212, 175, 55, 0.4)',
+                border: '1px solid rgba(212, 175, 55, 0.5)',
+                boxShadow: '0 4px 24px rgba(212, 175, 55, 0.3), 0 0 12px rgba(212, 175, 55, 0.1)',
                 color: '#000000'
               }}
             >

@@ -182,19 +182,20 @@ const SettingsPage: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl opacity-20 group-hover:opacity-30 transition-opacity blur"></div>
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex items-center justify-center" style={{
-                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                    border: '2px solid rgba(212, 175, 55, 0.3)',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden flex items-center justify-center" style={{
+                    background: 'linear-gradient(135deg, rgba(15, 15, 20, 0.9) 0%, rgba(30, 30, 40, 0.8) 100%)',
+                    border: '2px solid rgba(212, 175, 55, 0.35)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+                    padding: '4px'
                   }}>
                     {logoPreview ? (
                       <img 
                         src={logoPreview} 
                         alt="Logo preview" 
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain rounded-xl"
                       />
                     ) : (
-                      <svg className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     )}
@@ -346,8 +347,12 @@ const SettingsPage: React.FC = () => {
                 border: '1px solid rgba(212, 175, 55, 0.15)'
               }}>
                 {logoPreview && (
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden flex-shrink-0 ring-2 ring-amber-500/30">
-                    <img src={logoPreview} alt="Preview" className="w-full h-full object-contain" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden flex-shrink-0 p-1" style={{
+                    background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(20, 20, 20, 0.6) 100%)',
+                    border: '1.5px solid rgba(212, 175, 55, 0.35)',
+                    boxShadow: '0 0 12px rgba(212, 175, 55, 0.08)'
+                  }}>
+                    <img src={logoPreview} alt="Preview" className="w-full h-full object-contain rounded-lg" />
                   </div>
                 )}
                 <div>

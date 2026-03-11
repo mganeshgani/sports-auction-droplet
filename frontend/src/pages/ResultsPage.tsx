@@ -501,14 +501,28 @@ const ResultsPage: React.FC = () => {
           {teamsWithPlayers.length === 0 && stats.sold === 0 && (
             <div className="flex items-center justify-center py-20">
               <div className="text-center max-w-md">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{
-                  background: 'rgba(212, 175, 55, 0.08)',
-                  border: '1px solid rgba(212, 175, 55, 0.15)'
-                }}>
-                  <span className="text-4xl">🏆</span>
+                {/* Premium Icon */}
+                <div className="relative w-28 h-28 mx-auto mb-7">
+                  <div className="absolute inset-0 rounded-2xl" style={{
+                    background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.03) 100%)',
+                    border: '1px solid rgba(212, 175, 55, 0.18)',
+                    boxShadow: '0 0 40px rgba(212, 175, 55, 0.06)'
+                  }}></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-14 h-14" viewBox="0 0 48 48" fill="none">
+                      <path d="M15 12H10L13 24H10L16 38H32L38 24H35L37 12H33" stroke="rgba(212, 175, 55, 0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      <rect x="15" y="8" width="18" height="4" rx="2" stroke="rgba(212, 175, 55, 0.45)" strokeWidth="1.5" fill="rgba(212, 175, 55, 0.08)"/>
+                      <circle cx="24" cy="23" r="5" stroke="rgba(212, 175, 55, 0.4)" strokeWidth="1.5" fill="rgba(212, 175, 55, 0.06)"/>
+                      <path d="M24 21V25M22 23H26" stroke="rgba(212, 175, 55, 0.35)" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-lg font-medium text-gray-400">Auction hasn't started yet</p>
-                <p className="text-sm text-gray-600 mt-1">Results will appear here once players are sold to teams</p>
+                <h3 className="text-lg font-bold mb-1.5" style={{
+                  background: 'linear-gradient(135deg, #FFFFFF 0%, #D4AF37 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Auction hasn't started yet</h3>
+                <p className="text-sm text-gray-500">Results will appear here once players are sold to teams</p>
               </div>
             </div>
           )}
@@ -773,13 +787,22 @@ const ResultsPage: React.FC = () => {
                   return (
                     <div className="flex items-center justify-center py-20">
                       <div className="text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-                        >
-                          <span className="text-3xl opacity-40">👥</span>
+                        <div className="relative w-20 h-20 mx-auto mb-5">
+                          <div className="absolute inset-0 rounded-2xl" style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid rgba(255, 255, 255, 0.06)'
+                          }}></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <svg className="w-10 h-10" viewBox="0 0 48 48" fill="none">
+                              <circle cx="18" cy="16" r="6" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
+                              <circle cx="32" cy="16" r="6" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" fill="none"/>
+                              <path d="M8 38c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                              <path d="M26 38c0-5.523 4.477-10 10-10" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                            </svg>
+                          </div>
                         </div>
-                        <p className="text-base font-medium text-white/30">No Players Yet</p>
-                        <p className="text-xs text-white/15 mt-1">This team hasn't acquired any players</p>
+                        <p className="text-sm font-medium text-white/25">No Players Yet</p>
+                        <p className="text-xs text-white/12 mt-1">This team hasn't acquired any players</p>
                       </div>
                     </div>
                   );
