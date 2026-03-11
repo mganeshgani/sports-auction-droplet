@@ -120,53 +120,39 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
           50%  { transform: translate(-10%, 6%) scale(1.25); }
           100% { transform: translate(0%, 0%) scale(1.1); }
         }
-        @keyframes liquidC {
-          0%   { transform: translate(0%, 0%) scale(1); }
-          40%  { transform: translate(12%, 10%) scale(1.2); }
-          70%  { transform: translate(-8%, -6%) scale(1.08); }
-          100% { transform: translate(0%, 0%) scale(1); }
-        }
 
         /* ── Card Atmosphere ── */
         @keyframes breathe {
-          0%, 100% { box-shadow: 0 0 80px ${positionColors.light}55, 0 0 160px ${positionColors.light}22, 0 25px 80px rgba(0,0,0,0.6); }
-          50%      { box-shadow: 0 0 140px ${positionColors.light}77, 0 0 220px ${positionColors.light}33, 0 30px 100px rgba(0,0,0,0.5); }
+          0%, 100% { box-shadow: 0 0 60px ${positionColors.light}18, 0 25px 80px rgba(0,0,0,0.6); }
+          50%      { box-shadow: 0 0 100px ${positionColors.light}28, 0 30px 100px rgba(0,0,0,0.5); }
         }
         @keyframes borderPulse {
-          0%, 100% { opacity: 0.3; }
-          50%      { opacity: 0.8; }
+          0%, 100% { opacity: 0.2; }
+          50%      { opacity: 0.5; }
         }
-        @keyframes shimmer {
-          0%   { transform: translateX(-200%) skewX(-15deg); }
-          100% { transform: translateX(400%) skewX(-15deg); }
+
+        /* ── Moving Light Sweep (left → right) ── */
+        @keyframes sweepGlow {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
         }
 
         /* ── Photo Presence ── */
         @keyframes photoAura {
-          0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 60px ${positionColors.light}44, 0 0 120px ${positionColors.light}1A; }
-          50%      { box-shadow: 0 24px 70px rgba(0,0,0,0.5), 0 0 100px ${positionColors.light}66, 0 0 180px ${positionColors.light}28; }
-        }
-
-        /* ── Glowing Ring around Photo ── */
-        @keyframes glowRing {
-          0%, 100% { box-shadow: 0 0 15px ${positionColors.light}55, 0 0 40px ${positionColors.light}33, inset 0 0 15px ${positionColors.light}22; }
-          50%      { box-shadow: 0 0 25px ${positionColors.light}77, 0 0 60px ${positionColors.light}44, inset 0 0 25px ${positionColors.light}33; }
+          0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px ${positionColors.light}15; }
+          50%      { box-shadow: 0 24px 70px rgba(0,0,0,0.5), 0 0 70px ${positionColors.light}25; }
         }
 
         /* ── Sold Button ── */
         @keyframes soldGlow {
-          0%, 100% { box-shadow: 0 6px 30px rgba(16,185,129,0.35), 0 0 60px rgba(16,185,129,0.15), inset 0 1px 0 rgba(255,255,255,0.12); }
-          50%      { box-shadow: 0 8px 40px rgba(16,185,129,0.5), 0 0 80px rgba(16,185,129,0.2), inset 0 1px 0 rgba(255,255,255,0.12); }
+          0%, 100% { box-shadow: 0 6px 28px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.12); }
+          50%      { box-shadow: 0 8px 36px rgba(16,185,129,0.35), inset 0 1px 0 rgba(255,255,255,0.12); }
         }
 
-        /* ── Subtle Gold Light Trace on border ── */
+        /* ── Light Trace ── */
         @keyframes traceTop {
           0%   { left: -20%; }
           100% { left: 120%; }
-        }
-        @keyframes traceRight {
-          0%   { top: -20%; }
-          100% { top: 120%; }
         }
 
         .pc-entrance  { animation: enterCard 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -183,53 +169,26 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
       <div className="relative rounded-[24px] sm:rounded-[32px] overflow-hidden"
         style={{ animation: 'breathe 5s ease-in-out infinite' }}>
 
-        {/* Bright position-colored border with pulse */}
+        {/* Clean border with subtle pulse */}
         <div className="absolute inset-0 rounded-[24px] sm:rounded-[32px] pointer-events-none z-30"
-          style={{ border: `1.5px solid ${positionColors.light}66`, animation: 'borderPulse 4s ease-in-out infinite' }}/>
+          style={{ border: `1px solid ${positionColors.light}30`, animation: 'borderPulse 4s ease-in-out infinite' }}/>
 
-        {/* Position-colored light trace — top edge */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] z-30 overflow-hidden pointer-events-none">
-          <div className="absolute h-full w-[35%]" style={{
-            background: `linear-gradient(90deg, transparent, ${positionColors.light}CC 50%, transparent)`,
+        {/* Single light trace — top edge only */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] z-30 overflow-hidden pointer-events-none">
+          <div className="absolute h-full w-[30%]" style={{
+            background: `linear-gradient(90deg, transparent, ${positionColors.light}99 50%, transparent)`,
             animation: 'traceTop 6s ease-in-out infinite',
-          }}/>
-        </div>
-        {/* Position-colored light trace — right edge */}
-        <div className="absolute top-0 right-0 bottom-0 w-[2px] z-30 overflow-hidden pointer-events-none">
-          <div className="absolute w-full h-[35%]" style={{
-            background: `linear-gradient(180deg, transparent, ${positionColors.light}AA 50%, transparent)`,
-            animation: 'traceRight 8s ease-in-out 3s infinite',
-          }}/>
-        </div>
-        {/* Light trace — bottom edge */}
-        <div className="absolute bottom-0 left-0 right-0 h-[2px] z-30 overflow-hidden pointer-events-none">
-          <div className="absolute h-full w-[35%]" style={{
-            background: `linear-gradient(90deg, transparent, ${positionColors.dark}99 50%, transparent)`,
-            animation: 'traceTop 8s ease-in-out 2s infinite',
-          }}/>
-        </div>
-        {/* Light trace — left edge */}
-        <div className="absolute top-0 left-0 bottom-0 w-[2px] z-30 overflow-hidden pointer-events-none">
-          <div className="absolute w-full h-[35%]" style={{
-            background: `linear-gradient(180deg, transparent, ${positionColors.dark}88 50%, transparent)`,
-            animation: 'traceRight 10s ease-in-out 5s infinite',
           }}/>
         </div>
 
         {/* ═══════ LIQUID AURORA BACKGROUND ═══════ */}
         <div className="absolute inset-0" style={{ background: '#08080f' }}>
-          {/* Primary position-colored aurora — bright */}
-          <div className="absolute top-[-30%] right-[-20%] w-[80%] h-[90%] rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(ellipse, ${positionColors.light}5C 0%, ${positionColors.light}28 40%, transparent 70%)`, filter: 'blur(50px)', animation: 'liquidA 14s ease-in-out infinite' }}/>
-          {/* Secondary deep accent — bright */}
-          <div className="absolute bottom-[-25%] left-[-15%] w-[75%] h-[85%] rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(ellipse, ${positionColors.dark}44 0%, ${positionColors.dark}18 40%, transparent 70%)`, filter: 'blur(60px)', animation: 'liquidB 18s ease-in-out infinite' }}/>
-          {/* Third accent — mixed position glow */}
-          <div className="absolute top-[20%] left-[10%] w-[70%] h-[70%] rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(circle, ${positionColors.light}22 0%, ${positionColors.dark}0D 40%, transparent 65%)`, filter: 'blur(70px)', animation: 'liquidC 20s ease-in-out infinite' }}/>
-          {/* Corner accent glow — top left */}
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(circle, ${positionColors.dark}33 0%, transparent 60%)`, filter: 'blur(50px)', animation: 'liquidC 16s ease-in-out 4s infinite' }}/>
+          {/* Subtle position-colored aurora */}
+          <div className="absolute top-[-30%] right-[-20%] w-[70%] h-[80%] rounded-full pointer-events-none"
+            style={{ background: `radial-gradient(ellipse, ${positionColors.light}22 0%, ${positionColors.light}0A 50%, transparent 75%)`, filter: 'blur(60px)', animation: 'liquidA 14s ease-in-out infinite' }}/>
+          {/* Secondary accent */}
+          <div className="absolute bottom-[-25%] left-[-15%] w-[65%] h-[75%] rounded-full pointer-events-none"
+            style={{ background: `radial-gradient(ellipse, ${positionColors.dark}18 0%, ${positionColors.dark}08 50%, transparent 75%)`, filter: 'blur(70px)', animation: 'liquidB 18s ease-in-out infinite' }}/>
 
           {/* Very subtle grain for texture */}
           <div className="absolute inset-0 opacity-[0.03]" style={{
@@ -238,10 +197,12 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
           }}/>
         </div>
 
-        {/* Bright shimmer sweep */}
+        {/* ═══ Moving light sweep — left to right ═══ */}
         <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-[24px] sm:rounded-[32px]">
-          <div className="absolute inset-0 opacity-[0.08]"
-            style={{ background: 'linear-gradient(110deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%)', animation: 'shimmer 7s ease-in-out infinite' }}/>
+          <div className="absolute top-0 bottom-0 w-[40%]" style={{
+            background: `linear-gradient(90deg, transparent 0%, ${positionColors.light}12 30%, ${positionColors.light}20 50%, ${positionColors.light}12 70%, transparent 100%)`,
+            animation: 'sweepGlow 6s ease-in-out infinite',
+          }}/>
         </div>
 
         {/* ═══════ CONTENT ═══════ */}
@@ -250,16 +211,15 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
 
             {/* ── PHOTO ── */}
             <div className="pc-photo-w relative flex-shrink-0">
-              {/* Bright ambient glow behind photo */}
-              <div className="absolute -inset-6 rounded-[22px] sm:rounded-[26px]" style={{
-                background: `radial-gradient(ellipse, ${positionColors.light}55 0%, ${positionColors.light}22 50%, transparent 80%)`,
-                filter: 'blur(25px)',
+              {/* Subtle ambient glow behind photo */}
+              <div className="absolute -inset-4 rounded-[22px] sm:rounded-[26px]" style={{
+                background: `radial-gradient(ellipse, ${positionColors.light}1A 0%, ${positionColors.light}08 50%, transparent 80%)`,
+                filter: 'blur(20px)',
                 animation: 'borderPulse 5s ease-in-out infinite',
               }}/>
-              {/* Glowing position-colored border ring */}
-              <div className="absolute -inset-[3px] rounded-[20px] sm:rounded-[24px]" style={{
-                background: `linear-gradient(160deg, ${positionColors.light}88 0%, ${positionColors.dark}55 40%, ${positionColors.light}77 100%)`,
-                animation: 'glowRing 4s ease-in-out infinite',
+              {/* Clean gradient border */}
+              <div className="absolute -inset-[2px] rounded-[20px] sm:rounded-[24px]" style={{
+                background: `linear-gradient(160deg, ${positionColors.light}40 0%, ${positionColors.light}15 40%, ${positionColors.light}30 100%)`,
               }}/>
               {/* Photo */}
               <div className="relative rounded-[18px] sm:rounded-[22px] overflow-hidden"
@@ -286,7 +246,7 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                   background: `linear-gradient(135deg, #ffffff 0%, ${positionColors.light} 30%, ${positionColors.dark} 55%, ${positionColors.light} 80%, #ffffff 100%)`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  filter: `drop-shadow(0 2px 20px ${positionColors.light}77) drop-shadow(0 0 40px ${positionColors.light}33)`,
+                  filter: `drop-shadow(0 2px 12px ${positionColors.light}33)`,
                   fontFamily: "'Georgia', 'Times New Roman', serif",
                   letterSpacing: '-0.01em',
                 }}>
@@ -305,13 +265,13 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
                         fontSize: '0.75rem',
                         letterSpacing: '0.1em',
                         background: field.isHighPriority
-                          ? `${positionColors.light}26`
-                          : 'rgba(255,255,255,0.05)',
+                          ? `${positionColors.light}14`
+                          : 'rgba(255,255,255,0.04)',
                         border: field.isHighPriority
-                          ? `1px solid ${positionColors.light}55`
-                          : '1px solid rgba(255,255,255,0.10)',
-                        color: field.isHighPriority ? positionColors.light : 'rgba(255,255,255,0.55)',
-                        boxShadow: field.isHighPriority ? `0 0 20px ${positionColors.light}2E, 0 0 6px ${positionColors.light}1A` : 'none',
+                          ? `1px solid ${positionColors.light}30`
+                          : '1px solid rgba(255,255,255,0.08)',
+                        color: field.isHighPriority ? positionColors.light : 'rgba(255,255,255,0.5)',
+                        boxShadow: 'none',
                         animationDelay: `${0.5 + i * 0.08}s`,
                       }}>
                       {String(field.value)}
