@@ -49,9 +49,7 @@ const UnsoldPage: React.FC = () => {
     // Setup Socket.io for real-time updates
     const socket = initializeSocket();
 
-    socket.on('connect', () => {
-      console.log('✓ Unsold page connected to socket');
-    });
+    socket.on('connect', () => {});
 
     // Listen to relevant events — update state in-place from payloads
     socket.on('playerAdded', (newPlayer: any) => {
@@ -100,9 +98,7 @@ const UnsoldPage: React.FC = () => {
       fetchTeams(true);
     });
 
-    socket.on('disconnect', () => {
-      console.log('✗ Unsold page disconnected');
-    });
+    socket.on('disconnect', () => {});
 
     return () => {
       socket.off('connect');

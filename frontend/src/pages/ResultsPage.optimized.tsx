@@ -110,7 +110,6 @@ const ResultsPage: React.FC = () => {
     const debouncedFetch = () => {
       if (fetchTimeout) clearTimeout(fetchTimeout);
       fetchTimeout = setTimeout(() => {
-        console.log('🔄 Results refreshing (debounced)...');
         fetchData(false);
       }, 300);
     };
@@ -118,9 +117,7 @@ const ResultsPage: React.FC = () => {
     socket.on('auctionUpdated', debouncedFetch);
     socket.on('playerAddedToTeam', debouncedFetch);
     socket.on('playerRemovedFromTeam', debouncedFetch);
-    socket.on('disconnect', () => {
-      console.log('✗ Results page disconnected');
-    });
+    socket.on('disconnect', () => {});
     
     return () => {
       if (fetchTimeout) clearTimeout(fetchTimeout);

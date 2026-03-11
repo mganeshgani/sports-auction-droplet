@@ -63,11 +63,8 @@ const setupVisibilityHandler = () => {
 export const initializeSocket = () => {
   // Return existing instance if already created
   if (socketInstance && socketInstance.connected) {
-    console.log('♻️ Reusing existing socket instance:', socketInstance.id);
     return socketInstance;
   }
-
-  console.log('🆕 Creating new socket instance...');
   socketInstance = io(SOCKET_URL, {
     transports: ['websocket', 'polling'],
     reconnection: true,
@@ -82,42 +79,28 @@ export const initializeSocket = () => {
   });
 
   socketInstance.on('connect', () => {
-    console.log('✓ Socket.io connected:', socketInstance.id);
-    
     startHeartbeat();
     setupVisibilityHandler();
     
     // Join auctioneer-specific room
     const userStr = localStorage.getItem('user');
-    console.log('👤 User data from localStorage:', userStr ? 'exists' : 'missing');
     
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        console.log('👤 Parsed user:', user);
-        
         const auctioneerId = user._id || user.userId || user.id;
         if (auctioneerId) {
-          console.log(`📤 Emitting joinAuctioneer with ID: ${auctioneerId}`);
           socketInstance.emit('joinAuctioneer', auctioneerId);
-          console.log(`✓ Joined auctioneer room: auctioneer_${auctioneerId}`);
-        } else {
-          console.warn('⚠️ No user ID found in user object:', user);
         }
       } catch (error) {
-        console.error('❌ Error parsing user data:', error);
+        console.error('Error parsing user data:', error);
       }
-    } else {
-      console.warn('⚠️ No user data in localStorage - socket connected but not joined to room');
     }
   });
 
   socketInstance.on('disconnect', (reason: string) => {
-    console.log('Socket.io disconnected:', reason);
-    
     // If server disconnected us, try to reconnect immediately
     if (reason === 'io server disconnect') {
-      console.log('🔄 Server disconnected - attempting immediate reconnect...');
       socketInstance.connect();
     }
   });
@@ -127,16 +110,12 @@ export const initializeSocket = () => {
   });
 
   // Handle pong response from server
-  socketInstance.on('pong', () => {
-    console.log('🏓 Pong received from server');
-  });
+  socketInstance.on('pong', () => {});
 
   // Only connect if user is authenticated
   const userStr = localStorage.getItem('user');
   if (userStr) {
     socketInstance.connect();
-  } else {
-    console.log('⏸️ Socket created but not connected (waiting for authentication)');
   }
 
   return socketInstance;
@@ -148,7 +127,6 @@ export const initializeSocket = () => {
  */
 export const connectSocket = () => {
   if (socketInstance && !socketInstance.connected) {
-    console.log('🔗 Manually connecting socket after authentication...');
     socketInstance.connect();
   }
 };

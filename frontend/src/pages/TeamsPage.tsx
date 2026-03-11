@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Team } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -112,21 +112,15 @@ const TeamsPage: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      console.log('Starting auction reset...');
-      
       // Delete all players
-      const playersResponse = await axios.delete(`${API_URL}/players`, { headers });
-      console.log('Players deleted:', playersResponse.data);
+      await axios.delete(`${API_URL}/players`, { headers });
       
       // Delete all teams
-      const teamsResponse = await axios.delete(`${API_URL}/teams`, { headers });
-      console.log('Teams deleted:', teamsResponse.data);
+      await axios.delete(`${API_URL}/teams`, { headers });
       
       // Refresh data
       await fetchTeams();
       setShowResetModal(false);
-      
-      console.log('Auction reset completed successfully');
       
       // Optional: Show success message to user
       alert('✅ Auction reset successfully! All teams and players have been deleted.');
@@ -140,13 +134,6 @@ const TeamsPage: React.FC = () => {
   };
 
   // Statistics calculations
-  const totalTeams = teams.length;
-  const totalPlayers = useMemo(() => teams.reduce((sum, t) => sum + (t.filledSlots || 0), 0), [teams]);
-  const totalBudget = useMemo(() => teams.reduce((sum, t) => sum + (t.budget || 0), 0), [teams]);
-
-  // Use these values to avoid unused variable warnings
-  console.debug('Team stats:', { totalTeams, totalPlayers, totalBudget });
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Ultra-Compact Premium Header */}

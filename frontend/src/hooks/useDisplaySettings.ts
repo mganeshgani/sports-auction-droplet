@@ -88,7 +88,6 @@ export const useDisplaySettings = () => {
       if (saved) {
         try {
           savedSettings = JSON.parse(saved);
-          console.log('Loaded saved display settings:', savedSettings);
         } catch (e) {
           console.error('Error parsing saved display settings:', e);
         }
@@ -98,7 +97,6 @@ export const useDisplaySettings = () => {
       const savedHighPriority = localStorage.getItem(HIGH_PRIORITY_KEY);
       if (savedHighPriority) {
         setHighPriorityField(savedHighPriority);
-        console.log('Loaded high priority field:', savedHighPriority);
       }
       
       // Build default settings - name and photo always true (fixed)
@@ -128,7 +126,6 @@ export const useDisplaySettings = () => {
         }
       });
       
-      console.log('Final display settings:', defaultSettings);
       setDisplaySettings({ ...defaultSettings, name: true, photoUrl: true });
       
       // Mark initial load as complete AFTER setting the display settings
@@ -158,7 +155,6 @@ export const useDisplaySettings = () => {
     }
     
     if (Object.keys(displaySettings).length > 1) { // More than just { name: true }
-      console.log('Saving display settings to localStorage:', displaySettings);
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...displaySettings, name: true, photoUrl: true }));
     }
   }, [displaySettings]);
@@ -170,7 +166,6 @@ export const useDisplaySettings = () => {
     }
     
     if (highPriorityField) {
-      console.log('Saving high priority field to localStorage:', highPriorityField);
       localStorage.setItem(HIGH_PRIORITY_KEY, highPriorityField);
     } else {
       localStorage.removeItem(HIGH_PRIORITY_KEY);

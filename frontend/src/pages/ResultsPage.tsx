@@ -111,9 +111,7 @@ const ResultsPage: React.FC = () => {
     // Setup Socket.io for real-time updates
     const socket = initializeSocket();
 
-    socket.on('connect', () => {
-      console.log('✓ Results page connected to socket');
-    });
+    socket.on('connect', () => {});
 
     socket.on('playerSold', (data: any) => {
       // Update in-place: move player to sold and update team
@@ -132,7 +130,6 @@ const ResultsPage: React.FC = () => {
       }
     });
     socket.on('dataReset', () => {
-      console.log('Data reset - clearing cache');
       clearCache();
       fetchData(false);
     });
@@ -159,9 +156,7 @@ const ResultsPage: React.FC = () => {
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log('✗ Results page disconnected');
-    });
+    socket.on('disconnect', () => {});
     
     return () => {
       socket.off('connect');

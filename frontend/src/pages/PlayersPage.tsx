@@ -43,12 +43,7 @@ const PlayersPage: React.FC = () => {
     const socket = initializeSocket();
     let isComponentMounted = true;
 
-    console.log('🔌 PlayersPage: Setting up socket listeners', socket.id);
-    console.log('🔌 Socket connected:', socket.connected);
-
-    // Test socket connection
     const handleConnect = () => {
-      console.log('✅ Socket connected on PlayersPage:', socket.id);
       // Re-fetch players on reconnect to ensure sync
       if (isComponentMounted) {
         clearCache();
@@ -61,16 +56,13 @@ const PlayersPage: React.FC = () => {
     // Listen for playerAdded event - directly add to state for immediate update
     const handlePlayerAdded = (newPlayer: Player) => {
       if (!isComponentMounted) return;
-      console.log('✅✅✅ PLAYER ADDED EVENT RECEIVED:', newPlayer.name, newPlayer);
       // Immediately add to local state for instant UI update
       setPlayers(prevPlayers => {
         // Check if player already exists to avoid duplicates
         const exists = prevPlayers.some(p => p._id === newPlayer._id);
         if (exists) {
-          console.log('⚠️ Player already exists, updating instead');
           return prevPlayers.map(p => p._id === newPlayer._id ? newPlayer : p);
         }
-        console.log('➕ Adding new player to list');
         return [...prevPlayers, newPlayer];
       });
       // Refresh user to update limits
@@ -80,7 +72,6 @@ const PlayersPage: React.FC = () => {
     // Listen for playerUpdated event
     const handlePlayerUpdated = (updatedPlayer: Player) => {
       if (!isComponentMounted) return;
-      console.log('✅ Player updated via socket:', updatedPlayer.name);
       // Immediately update in local state
       setPlayers(prevPlayers => 
         prevPlayers.map(p => p._id === updatedPlayer._id ? updatedPlayer : p)
@@ -90,7 +81,6 @@ const PlayersPage: React.FC = () => {
     // Listen for playerDeleted event
     const handlePlayerDeleted = (deletedPlayer: Player) => {
       if (!isComponentMounted) return;
-      console.log('✅ Player deleted via socket:', deletedPlayer._id);
       // Immediately remove from local state
       const deletedId = typeof deletedPlayer === 'object' ? (deletedPlayer._id || (deletedPlayer as any).playerId) : deletedPlayer;
       setPlayers(prevPlayers => prevPlayers.filter(p => p._id !== deletedId));
@@ -104,7 +94,6 @@ const PlayersPage: React.FC = () => {
 
     // Cleanup on unmount
     return () => {
-      console.log('🔌 PlayersPage: Cleaning up socket listeners');
       isComponentMounted = false;
       socket.off('connect', handleConnect);
       socket.off('playerAdded', handlePlayerAdded);
@@ -539,7 +528,6 @@ const PlayersPage: React.FC = () => {
           player={null}
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
-            console.log('✅ Add player success callback - refreshing list');
             clearCache(); // Clear cache before fetching fresh data
             fetchPlayers(true); // BYPASS CACHE - force refresh
             refreshUser(); // Update user limits
