@@ -140,500 +140,384 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="h-full overflow-y-auto p-3 sm:p-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Premium Header with Gradient */}
-        <div className="mb-4 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-transparent blur-3xl"></div>
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-1 h-8 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"></div>
-              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-200 via-amber-300 to-amber-400 text-transparent bg-clip-text">
-                Branding Settings
-              </h1>
-            </div>
-            <p className="text-xs text-slate-400 ml-3">Customize your auction platform's appearance</p>
+      <div className="max-w-2xl mx-auto space-y-6">
+
+        {/* ─── SECTION 1: BRANDING ─── */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #D4AF37, #a08520)' }}></div>
+            <h1 className="text-lg sm:text-xl font-bold text-white">Branding</h1>
+            <span className="text-[10px] px-2 py-0.5 rounded-full text-slate-400" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>Appearance</span>
           </div>
-        </div>
 
-        {/* Ultra Premium Form Card */}
-        <form onSubmit={handleSubmit} className="relative overflow-hidden rounded-2xl" style={{
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.2)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 175, 55, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-        }}>
-          {/* Shimmer Effect Overlay */}
-          <div className="absolute inset-0 opacity-30 pointer-events-none" style={{
-            background: 'radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 50%)'
-          }}></div>
+          <form onSubmit={handleSubmit} className="rounded-2xl overflow-hidden" style={{
+            background: 'rgba(15, 18, 28, 0.85)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+          }}>
+            <div className="p-4 sm:p-6 space-y-5">
 
-          <div className="relative p-4 sm:p-5 space-y-4">
-            {/* Logo Upload Section */}
-            <div className="relative p-4 rounded-xl" style={{
-              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.02) 100%)',
-              border: '1px solid rgba(212, 175, 55, 0.15)'
-            }}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <label className="text-xs font-bold text-amber-300">Application Logo</label>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl opacity-20 group-hover:opacity-30 transition-opacity blur"></div>
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden flex items-center justify-center" style={{
-                    background: 'linear-gradient(135deg, rgba(15, 15, 20, 0.9) 0%, rgba(30, 30, 40, 0.8) 100%)',
-                    border: '2px solid rgba(212, 175, 55, 0.35)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
-                    padding: '4px'
-                  }}>
-                    {logoPreview ? (
-                      <img 
-                        src={logoPreview} 
-                        alt="Logo preview" 
-                        className="w-full h-full object-contain rounded-xl"
-                      />
-                    ) : (
-                      <svg className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              {/* Logo Upload — Click-to-upload zone */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 mb-2 block">Logo</label>
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer group relative flex-shrink-0">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setLogoFile(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => setLogoPreview(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex items-center justify-center transition-all duration-200 group-hover:border-amber-400/60" style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '2px dashed rgba(212, 175, 55, 0.3)',
+                      padding: '4px'
+                    }}>
+                      {logoPreview ? (
+                        <img src={logoPreview} alt="Logo" className="w-full h-full object-contain rounded-lg" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-slate-500">
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 rounded-xl bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
+                    </div>
+                  </label>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-400">Click the box to upload</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Square image recommended. PNG, JPG, or SVG up to 5 MB.</p>
+                    {logoPreview && (
+                      <button
+                        type="button"
+                        onClick={() => { setLogoPreview(''); setLogoFile(null); }}
+                        className="text-[10px] text-red-400 hover:text-red-300 mt-1.5 transition-colors"
+                      >Remove logo</button>
                     )}
                   </div>
                 </div>
-                <div className="flex-1">
+              </div>
+
+              {/* Divider */}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}></div>
+
+              {/* Title & Subtitle */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="title" className="text-xs font-semibold text-slate-300 mb-1.5 block">Title <span className="text-red-400">*</span></label>
                   <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setLogoFile(file);
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setLogoPreview(reader.result as string);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-lg text-white transition-all file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:transition-all file:cursor-pointer"
+                    id="title"
+                    type="text"
+                    required
+                    maxLength={50}
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg text-white placeholder-slate-500 transition-all focus:outline-none"
+                    placeholder="e.g., SPORTS AUCTION"
                     style={{
-                      background: 'rgba(30, 41, 59, 0.6)',
-                      border: '1px solid rgba(212, 175, 55, 0.2)'
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.1)'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.4)';
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.08)';
                     }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.2)';
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}
                   />
-                  <style>{`
-                    input[type="file"]::file-selector-button {
-                      background: linear-gradient(135deg, #d4af37 0%, #f0d770 50%, #d4af37 100%);
-                      color: #1a1a1a;
-                      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-                    }
-                    input[type="file"]::file-selector-button:hover {
-                      background: linear-gradient(135deg, #f0d770 0%, #d4af37 50%, #f0d770 100%);
-                      box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
-                    }
-                  `}</style>
-                  <p className="text-[9px] text-slate-500 mt-1.5 ml-0.5">Square image, max 5MB • PNG, JPG, or SVG</p>
+                  <p className="text-[10px] text-slate-500 mt-1 text-right">
+                    <span className={formData.title.length > 40 ? 'text-amber-500' : ''}>{formData.title.length}</span>/50
+                  </p>
                 </div>
-              </div>
-            </div>
 
-            {/* Input Fields Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Main Title */}
-              <div className="relative p-3 rounded-xl" style={{
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%)',
-                border: '1px solid rgba(99, 102, 241, 0.15)'
-              }}>
-                <label htmlFor="title" className="flex items-center gap-1.5 text-xs font-bold text-indigo-300 mb-2">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                  </svg>
-                  Main Title
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  required
-                  maxLength={50}
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 text-xs rounded-lg text-white placeholder-slate-500 transition-all focus:outline-none"
-                  placeholder="e.g., SPORTS AUCTION"
-                  style={{
-                    background: 'rgba(30, 41, 59, 0.6)',
-                    border: '1px solid rgba(99, 102, 241, 0.2)'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.2)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-                <p className="text-[9px] text-slate-500 mt-1 flex items-center justify-between">
-                  <span>Required field</span>
-                  <span className={formData.title.length > 40 ? 'text-amber-500' : ''}>{formData.title.length}/50</span>
-                </p>
-              </div>
-
-              {/* Subtitle */}
-              <div className="relative p-3 rounded-xl" style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(167, 139, 250, 0.03) 100%)',
-                border: '1px solid rgba(139, 92, 246, 0.15)'
-              }}>
-                <label htmlFor="subtitle" className="flex items-center gap-1.5 text-xs font-bold text-purple-300 mb-2">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  Organization
-                </label>
-                <input
-                  id="subtitle"
-                  type="text"
-                  required
-                  maxLength={100}
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 text-xs rounded-lg text-white placeholder-slate-500 transition-all focus:outline-none"
-                  placeholder="e.g., Your Organization Name"
-                  style={{
-                    background: 'rgba(30, 41, 59, 0.6)',
-                    border: '1px solid rgba(139, 92, 246, 0.2)'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-                <p className="text-[9px] text-slate-500 mt-1 flex items-center justify-between">
-                  <span>Required field</span>
-                  <span className={formData.subtitle.length > 80 ? 'text-amber-500' : ''}>{formData.subtitle.length}/100</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Live Preview */}
-            <div className="relative p-4 rounded-xl overflow-hidden" style={{
-              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)',
-              border: '1px solid rgba(212, 175, 55, 0.2)',
-              boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.3)'
-            }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <p className="text-xs font-bold text-emerald-300">Live Preview</p>
-                </div>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Real-time</span>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg" style={{
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(26, 26, 26, 0.3) 100%)',
-                border: '1px solid rgba(212, 175, 55, 0.15)'
-              }}>
-                {logoPreview && (
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden flex-shrink-0 p-1" style={{
-                    background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(20, 20, 20, 0.6) 100%)',
-                    border: '1.5px solid rgba(212, 175, 55, 0.35)',
-                    boxShadow: '0 0 12px rgba(212, 175, 55, 0.08)'
-                  }}>
-                    <img src={logoPreview} alt="Preview" className="w-full h-full object-contain rounded-lg" />
-                  </div>
-                )}
                 <div>
-                  <h2 className="text-base sm:text-lg font-bold bg-gradient-to-r from-amber-200 via-amber-300 to-amber-400 text-transparent bg-clip-text">
-                    {formData.title || 'SPORTS AUCTION'}
-                  </h2>
-                  <p className="text-[10px] sm:text-xs text-amber-500/70 mt-0.5">
-                    {formData.subtitle || 'Your Organization Name'}
+                  <label htmlFor="subtitle" className="text-xs font-semibold text-slate-300 mb-1.5 block">Organisation <span className="text-red-400">*</span></label>
+                  <input
+                    id="subtitle"
+                    type="text"
+                    required
+                    maxLength={100}
+                    value={formData.subtitle}
+                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg text-white placeholder-slate-500 transition-all focus:outline-none"
+                    placeholder="e.g., Your Organisation Name"
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.1)'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1 text-right">
+                    <span className={formData.subtitle.length > 80 ? 'text-amber-500' : ''}>{formData.subtitle.length}</span>/100
                   </p>
                 </div>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowResetConfirm(true)}
-                disabled={saving}
-                className="group px-4 py-2.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  color: '#fca5a5'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.15) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
-                }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Reset
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 group px-4 py-2.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden"
-                style={{
-                  background: 'linear-gradient(135deg, #d4af37 0%, #f0d770 50%, #d4af37 100%)',
-                  color: '#1a1a1a',
-                  boxShadow: '0 8px 24px rgba(212, 175, 55, 0.4), 0 0 20px rgba(212, 175, 55, 0.2)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(212, 175, 55, 0.5), 0 0 30px rgba(212, 175, 55, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(212, 175, 55, 0.4), 0 0 20px rgba(212, 175, 55, 0.2)';
-                }}
-              >
-                {saving ? (
-                  <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving Changes...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Save Changes
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
+              {/* Live Preview */}
+              <div className="rounded-xl p-3.5" style={{
+                background: 'rgba(0,0,0,0.3)',
+                border: '1px solid rgba(255,255,255,0.06)'
+              }}>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2.5">Header Preview</p>
+                <div className="flex items-center gap-3">
+                  {logoPreview && (
+                    <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 p-0.5" style={{
+                      border: '1.5px solid rgba(212, 175, 55, 0.3)',
+                    }}>
+                      <img src={logoPreview} alt="Preview" className="w-full h-full object-contain rounded-md" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h2 className="text-sm sm:text-base font-bold truncate" style={{ color: '#D4AF37' }}>
+                      {formData.title || 'SPORTS AUCTION'}
+                    </h2>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {formData.subtitle || 'Your Organisation Name'}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-        {/* Display Settings Section */}
-        <div className="relative overflow-hidden rounded-2xl" style={{
-          background: 'linear-gradient(165deg, rgba(10, 10, 10, 0.98) 0%, rgba(20, 20, 22, 0.95) 50%, rgba(10, 10, 10, 0.98) 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.15)',
-          boxShadow: '0 20px 60px -20px rgba(0, 0, 0, 0.8), 0 0 40px rgba(212, 175, 55, 0.05)'
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(true)}
+                  disabled={saving}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-1.5"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    color: '#f87171',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    backdropFilter: 'blur(8px)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.16)';
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                  }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reset
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{
+                    background: 'rgba(212, 175, 55, 0.15)',
+                    color: '#fcd34d',
+                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    backdropFilter: 'blur(8px)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.25)';
+                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                    e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {saving ? (
+                    <>
+                      <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        {/* ─── SECTION 2: PLAYER CARD DISPLAY ─── */}
+        <section className="rounded-2xl overflow-hidden" style={{
+          background: 'rgba(15, 18, 28, 0.85)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
         }}>
-          {/* Header */}
-          <div className="px-4 sm:px-6 py-4 border-b" style={{ borderColor: 'rgba(212, 175, 55, 0.1)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{
-                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%)',
+          {/* Section Header */}
+          <div className="px-4 sm:px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{
+                background: 'rgba(212, 175, 55, 0.1)',
                 border: '1px solid rgba(212, 175, 55, 0.2)'
               }}>
-                <svg className="w-4 h-4" fill="none" stroke="#D4AF37" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="#D4AF37" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-bold" style={{
-                  background: 'linear-gradient(135deg, #FFFFFF 0%, #F0D770 50%, #D4AF37 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
-                }}>Player Card Display</h2>
-                <p className="text-[11px] text-slate-500">Choose what details to show on player cards (Auction & Players page)</p>
+                <h2 className="text-base font-bold text-white">Player Card Display</h2>
+                <p className="text-[10px] text-slate-500">Choose which fields appear on player cards</p>
               </div>
             </div>
+            {!displayLoading && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{
+                background: getSelectedCount() >= MAX_SELECTABLE_ITEMS ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${getSelectedCount() >= MAX_SELECTABLE_ITEMS ? 'rgba(212, 175, 55, 0.3)' : 'rgba(255,255,255,0.08)'}`
+              }}>
+                <span className="text-xs font-bold" style={{ color: getSelectedCount() >= MAX_SELECTABLE_ITEMS ? '#D4AF37' : '#94a3b8' }}>
+                  {getSelectedCount()}/{MAX_SELECTABLE_ITEMS}
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Settings Content */}
-          <div className="p-4 sm:p-6 space-y-4">
+          <div className="p-4 sm:p-6">
             {displayLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
               </div>
             ) : (
-              <>
-                {/* Selection Counter */}
-                <div className="flex items-center justify-between p-3 rounded-xl" style={{
-                  background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.02) 100%)',
-                  border: '1px solid rgba(212, 175, 55, 0.15)'
-                }}>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-xs text-gray-400">Fields selected</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold" style={{ color: '#D4AF37' }}>
-                      {getSelectedCount()}
-                    </span>
-                    <span className="text-xs text-gray-500">/ {MAX_SELECTABLE_ITEMS}</span>
-                  </div>
-                </div>
-
-                {/* Info note about fixed fields */}
-                <div className="p-2.5 rounded-lg flex items-center gap-2" style={{
-                  background: 'rgba(59, 130, 246, 0.08)',
-                  border: '1px solid rgba(59, 130, 246, 0.2)'
-                }}>
-                  <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-[11px] text-blue-300/80">Player Name & Photo are always displayed on cards</span>
-                </div>
-
-                {/* Dynamic Selectable Fields */}
-                <div className="space-y-2">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold px-1">
-                    Select up to {MAX_SELECTABLE_ITEMS} fields to display
-                  </p>
-                  {getSelectableFields().map((field) => {
-                    const isSelected = displaySettings[field.fieldName] === true;
-                    const canSelect = isSelected || getSelectedCount() < MAX_SELECTABLE_ITEMS;
-                    
-                    return (
-                      <div
-                        key={field.fieldName}
-                        className={`flex items-center justify-between p-3 rounded-xl transition-all ${!canSelect && !isSelected ? 'opacity-50' : ''}`}
-                        style={{
-                          background: isSelected 
-                            ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.03) 100%)'
-                            : 'rgba(255, 255, 255, 0.02)',
-                          border: isSelected 
-                            ? '1px solid rgba(212, 175, 55, 0.3)'
-                            : '1px solid rgba(255, 255, 255, 0.05)'
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">{getFieldIcon(field.fieldName, field.fieldType)}</span>
-                          <span className="text-sm font-medium text-gray-300">{field.fieldLabel}</span>
+              <div className="space-y-4">
+                {/* Always-visible fields */}
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2 px-0.5">Always shown</p>
+                  <div className="space-y-1.5">
+                    {[{ icon: '📷', label: 'Player Photo' }, { icon: '👤', label: 'Player Name' }].map((f) => (
+                      <div key={f.label} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.04)'
+                      }}>
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-base">{f.icon}</span>
+                          <span className="text-sm text-slate-400">{f.label}</span>
                         </div>
-                        <button
-                          onClick={() => toggleSetting(field.fieldName)}
-                          disabled={!canSelect && !isSelected}
-                          className={`w-12 h-6 rounded-full relative transition-all duration-300 ${
-                            isSelected
-                              ? 'bg-gradient-to-r from-amber-500 to-yellow-500'
-                              : canSelect 
-                                ? 'bg-gray-700 hover:bg-gray-600' 
-                                : 'bg-gray-800 cursor-not-allowed'
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-lg transition-all duration-300 ${
-                              isSelected ? 'left-6' : 'left-0.5'
-                            }`}
-                          />
-                        </button>
+                        <span className="text-[10px] text-slate-500 px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }}>Fixed</span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
 
-                {/* Primary Field Selector */}
-                {getEnabledFields().length > 0 && (
-                  <div className="mt-4 p-4 rounded-xl" style={{
-                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(245, 158, 11, 0.02) 100%)',
-                    border: '1px solid rgba(245, 158, 11, 0.15)'
-                  }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
-                        <span className="text-amber-400 text-sm">◆</span>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-white">Primary Field</h4>
-                        <p className="text-[10px] text-gray-400">Highlighted with gold accent on all cards</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      {/* None option */}
-                      <button
-                        onClick={() => setHighPriority(null)}
-                        className={`p-2.5 rounded-lg text-left transition-all duration-200 ${
-                          !highPriorityField 
-                            ? 'ring-2 ring-amber-500/50' 
-                            : 'hover:bg-white/5'
-                        }`}
-                        style={{
-                          background: !highPriorityField 
-                            ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)'
-                            : 'rgba(255, 255, 255, 0.02)',
-                          border: !highPriorityField 
-                            ? '1px solid rgba(245, 158, 11, 0.3)'
-                            : '1px solid rgba(255, 255, 255, 0.05)'
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm opacity-50">○</span>
-                          <span className="text-xs text-gray-400">None</span>
-                        </div>
-                      </button>
-                      
-                      {/* Enabled fields options */}
-                      {getEnabledFields().map((field) => (
-                        <button
-                          key={field.fieldName}
-                          onClick={() => setHighPriority(field.fieldName)}
-                          className={`p-2.5 rounded-lg text-left transition-all duration-200 ${
-                            highPriorityField === field.fieldName 
-                              ? 'ring-2 ring-amber-500/50' 
-                              : 'hover:bg-white/5'
-                          }`}
-                          style={{
-                            background: highPriorityField === field.fieldName 
-                              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)'
-                              : 'rgba(255, 255, 255, 0.02)',
-                            border: highPriorityField === field.fieldName 
-                              ? '1px solid rgba(245, 158, 11, 0.3)'
-                              : '1px solid rgba(255, 255, 255, 0.05)'
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{getFieldIcon(field.fieldName, '')}</span>
-                            <span className="text-xs text-gray-300 truncate">{field.fieldLabel}</span>
-                            {highPriorityField === field.fieldName && (
-                              <span className="text-amber-400 text-xs ml-auto">◆</span>
-                            )}
+                {/* Selectable fields */}
+                {getSelectableFields().length > 0 && (
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2 px-0.5">
+                      Optional fields <span className="normal-case text-slate-600">(select up to {MAX_SELECTABLE_ITEMS})</span>
+                    </p>
+                    <div className="space-y-1.5">
+                      {getSelectableFields().map((field) => {
+                        const isSelected = displaySettings[field.fieldName] === true;
+                        const canSelect = isSelected || getSelectedCount() < MAX_SELECTABLE_ITEMS;
+                        const isPrimary = highPriorityField === field.fieldName;
+                        
+                        return (
+                          <div
+                            key={field.fieldName}
+                            className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 ${!canSelect && !isSelected ? 'opacity-40' : ''}`}
+                            style={{
+                              background: isSelected ? 'rgba(212, 175, 55, 0.06)' : 'rgba(255,255,255,0.02)',
+                              border: `1px solid ${isSelected ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255,255,255,0.04)'}`
+                            }}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-base flex-shrink-0">{getFieldIcon(field.fieldName, field.fieldType)}</span>
+                              <span className={`text-sm truncate ${isSelected ? 'text-white font-medium' : 'text-slate-400'}`}>{field.fieldLabel}</span>
+                              {/* Inline primary star — only show for enabled fields */}
+                              {isSelected && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setHighPriority(isPrimary ? null : field.fieldName); }}
+                                  className="flex-shrink-0 transition-all duration-200"
+                                  title={isPrimary ? 'Remove primary highlight' : 'Set as primary field (gold accent on cards)'}
+                                >
+                                  {isPrimary ? (
+                                    <svg className="w-4 h-4 text-amber-400 drop-shadow-[0_0_4px_rgba(212,175,55,0.6)]" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-4 h-4 text-slate-600 hover:text-amber-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                    </svg>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                            {/* Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => toggleSetting(field.fieldName)}
+                              disabled={!canSelect && !isSelected}
+                              className={`w-11 h-6 rounded-full relative transition-all duration-300 flex-shrink-0 ml-3 ${
+                                !canSelect && !isSelected ? 'cursor-not-allowed' : 'cursor-pointer'
+                              }`}
+                              style={{
+                                background: isSelected
+                                  ? 'linear-gradient(135deg, #d4af37, #f0d770)'
+                                  : 'rgba(255,255,255,0.08)'
+                              }}
+                            >
+                              <span
+                                className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-300"
+                                style={{ left: isSelected ? '22px' : '2px' }}
+                              />
+                            </button>
                           </div>
-                        </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* Info Note */}
-                <div className="flex items-start gap-2 p-3 rounded-lg mt-4" style={{
-                  background: 'rgba(59, 130, 246, 0.08)',
-                  border: '1px solid rgba(59, 130, 246, 0.2)'
+                {/* Tip */}
+                <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg" style={{
+                  background: 'rgba(59, 130, 246, 0.05)',
+                  border: '1px solid rgba(59, 130, 246, 0.12)'
                 }}>
-                  <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-blue-400/70 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-[11px] text-blue-300/80">
-                    Fields are loaded from your Form Builder configuration. Changes are saved automatically and apply to player cards across Auction, Players, Results, and Unsold pages.
+                  <p className="text-[11px] text-slate-500">
+                    Click the <span className="text-amber-400">★</span> star next to an enabled field to highlight it with a gold accent on cards. Fields are loaded from Form Builder. Changes save automatically.
                   </p>
                 </div>
-              </>
+              </div>
             )}
           </div>
-        </div>
+        </section>
       </div>
       <ConfirmModal
         open={showResetConfirm}
