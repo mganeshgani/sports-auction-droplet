@@ -119,17 +119,42 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
           100% { transform: translateX(400%); }
         }
         @keyframes orbFloat1 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
-          33%      { transform: translate(50px, -30px) scale(1.2); opacity: 0.6; }
-          66%      { transform: translate(20px, -50px) scale(1.1); opacity: 0.5; }
+          0%   { transform: translate(0, 0) scale(1); opacity: 0.45; }
+          25%  { transform: translate(70px, -40px) scale(1.25); opacity: 0.65; }
+          50%  { transform: translate(30px, -70px) scale(1.1); opacity: 0.5; }
+          75%  { transform: translate(-20px, -30px) scale(1.3); opacity: 0.6; }
+          100% { transform: translate(0, 0) scale(1); opacity: 0.45; }
         }
         @keyframes orbFloat2 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
-          50%      { transform: translate(-35px, 25px) scale(1.3); opacity: 0.55; }
+          0%   { transform: translate(0, 0) scale(1); opacity: 0.35; }
+          33%  { transform: translate(-50px, 35px) scale(1.35); opacity: 0.6; }
+          66%  { transform: translate(30px, -20px) scale(1.15); opacity: 0.45; }
+          100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
         }
         @keyframes orbFloat3 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
-          50%      { transform: translate(25px, 35px) scale(1.15); opacity: 0.4; }
+          0%   { transform: translate(0, 0) scale(1); opacity: 0.25; }
+          25%  { transform: translate(40px, 45px) scale(1.2); opacity: 0.45; }
+          50%  { transform: translate(-30px, 20px) scale(1.3); opacity: 0.35; }
+          75%  { transform: translate(15px, -25px) scale(1.1); opacity: 0.5; }
+          100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+        }
+        @keyframes auroraWave {
+          0%   { transform: translateX(-50%) rotate(-3deg); opacity: 0.12; }
+          50%  { transform: translateX(10%) rotate(3deg); opacity: 0.22; }
+          100% { transform: translateX(-50%) rotate(-3deg); opacity: 0.12; }
+        }
+        @keyframes auroraWave2 {
+          0%   { transform: translateX(20%) rotate(2deg); opacity: 0.08; }
+          50%  { transform: translateX(-40%) rotate(-4deg); opacity: 0.18; }
+          100% { transform: translateX(20%) rotate(2deg); opacity: 0.08; }
+        }
+        @keyframes meshRotate {
+          0%   { transform: translate(-50%, -50%) rotate(0deg); }
+          100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0); }
+          50%      { opacity: 0.8; transform: scale(1); }
         }
         @keyframes photoGlow {
           0%, 100% { box-shadow: 0 16px 50px rgba(0,0,0,0.5), 0 0 50px ${positionColors.light}25, 0 0 100px ${positionColors.light}10; }
@@ -209,7 +234,35 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
             style={{ background: 'radial-gradient(circle, rgba(234,179,8,0.16) 0%, transparent 60%)', filter: 'blur(35px)', animation: 'orbFloat3 14s ease-in-out 2s infinite' }} />
           {/* Orb 5 — center-right emerald pulse */}
           <div className="absolute top-1/3 -right-16 w-[22rem] h-[22rem] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 60%)', filter: 'blur(50px)', animation: 'orbFloat1 16s ease-in-out 3s infinite' }} />
+            style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 60%)', filter: 'blur(50px)', animation: 'orbFloat1 16s ease-in-out 3s infinite' }} />
+          {/* Orb 6 — bottom-right rose */}
+          <div className="absolute -bottom-16 -right-20 w-[24rem] h-[24rem] rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(244,114,182,0.1) 0%, transparent 55%)', filter: 'blur(55px)', animation: 'orbFloat2 18s ease-in-out 5s infinite' }} />
+
+          {/* Aurora wave bands */}
+          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[30%] pointer-events-none" style={{
+            background: 'linear-gradient(180deg, transparent, rgba(201,168,76,0.15), rgba(100,70,180,0.08), transparent)',
+            filter: 'blur(30px)', animation: 'auroraWave 8s ease-in-out infinite',
+          }}/>
+          <div className="absolute top-[40%] -left-1/3 w-[180%] h-[25%] pointer-events-none" style={{
+            background: `linear-gradient(180deg, transparent, ${positionColors.light}18, rgba(16,185,129,0.06), transparent)`,
+            filter: 'blur(35px)', animation: 'auroraWave2 10s ease-in-out infinite',
+          }}/>
+
+          {/* Rotating gradient mesh */}
+          <div className="absolute top-1/2 left-1/2 w-[140%] h-[140%] pointer-events-none" style={{
+            background: 'conic-gradient(from 0deg, transparent 0%, rgba(201,168,76,0.04) 10%, transparent 20%, rgba(100,70,180,0.03) 30%, transparent 40%, rgba(16,185,129,0.03) 50%, transparent 60%, rgba(201,168,76,0.04) 70%, transparent 80%, rgba(244,114,182,0.02) 90%, transparent 100%)',
+            animation: 'meshRotate 30s linear infinite',
+          }}/>
+
+          {/* Sparkle dots grid */}
+          <div className="absolute top-[12%] left-[20%] w-1 h-1 rounded-full bg-white pointer-events-none" style={{ animation: 'sparkle 3s ease-in-out infinite' }}/>
+          <div className="absolute top-[65%] left-[75%] w-0.5 h-0.5 rounded-full bg-amber-300 pointer-events-none" style={{ animation: 'sparkle 4s ease-in-out 1s infinite' }}/>
+          <div className="absolute top-[35%] left-[85%] w-1 h-1 rounded-full bg-amber-200 pointer-events-none" style={{ animation: 'sparkle 3.5s ease-in-out 2s infinite' }}/>
+          <div className="absolute top-[80%] left-[30%] w-0.5 h-0.5 rounded-full bg-white pointer-events-none" style={{ animation: 'sparkle 5s ease-in-out 0.5s infinite' }}/>
+          <div className="absolute top-[50%] left-[10%] w-1 h-1 rounded-full bg-yellow-200 pointer-events-none" style={{ animation: 'sparkle 4.5s ease-in-out 3s infinite' }}/>
+          <div className="absolute top-[20%] left-[55%] w-0.5 h-0.5 rounded-full bg-white pointer-events-none" style={{ animation: 'sparkle 3s ease-in-out 1.5s infinite' }}/>
+
           {/* Noise grain texture */}
           <div className="absolute inset-0 opacity-[0.04]" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
@@ -281,15 +334,14 @@ const PlayerCard: React.FC<PlayerCardProps> = memo(({
             <div className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 w-full min-w-0">
 
               {/* Player Name */}
-              <div className="pc-content text-center lg:text-left overflow-hidden">
-                <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-[3rem] font-black leading-[1.1] tracking-tight break-words"
+              <div className="pc-content text-center lg:text-left">
+                <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-[3rem] font-black leading-[1.2] tracking-tight pb-1"
                   style={{
                     background: 'linear-gradient(140deg, #ffffff 0%, #f0e4c8 25%, #c9a84c 50%, #f5e6b8 75%, #ffffff 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 3px 16px rgba(201,168,76,0.35))',
                     fontFamily: "'Georgia', 'Times New Roman', serif",
-                    wordBreak: 'break-word'
                   }}>
                   {player.name}
                 </h1>
