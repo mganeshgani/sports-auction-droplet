@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import AuctioneerDetailModal from '../components/AuctioneerDetailModal';
 import { adminService, getStaleCached } from '../services/api';
+import SEO from '../components/SEO';
 
 interface Auctioneer {
   _id: string;
@@ -162,6 +163,12 @@ const AuctioneersPage: React.FC = () => {
   }
 
   return (
+    <>
+    <SEO
+      title="Auctioneers | BidSport"
+      description="Manage auctioneer accounts with BidSport."
+      noIndex={true}
+    />
     <div className="space-y-5 pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -394,6 +401,7 @@ const AuctioneersPage: React.FC = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

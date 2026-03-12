@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import SEO from '../components/SEO';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -80,6 +81,13 @@ const Login: React.FC = () => {
   };
 
   return (
+    <>
+    <SEO
+      title="Login | BidSport — Sports Auction Software"
+      description="Log in to your BidSport account and manage your sports player auctions. Cricket, football, kabaddi auction management platform."
+      url="https://sportsauction.me/login"
+      noIndex={false}
+    />
     <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center overflow-auto">
       <div className="w-full max-w-md px-4 py-8 sm:px-0">
         {/* Card Container */}
@@ -172,11 +180,15 @@ const Login: React.FC = () => {
                   )}
                 </button>
               </form>
+              <p className="text-center text-xs text-slate-500 mt-4">
+                India's trusted sports auction platform for cricket, football, kabaddi & volleyball tournaments
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

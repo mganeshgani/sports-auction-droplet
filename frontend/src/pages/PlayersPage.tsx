@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import { playerService, clearCache, getStaleCached } from '../services/api';
 import { initializeSocket } from '../services/socket';
+import SEO from '../components/SEO';
 
 const PlayersPage: React.FC = () => {
   const { isAuctioneer, user, refreshUser } = useAuth();
@@ -164,6 +165,12 @@ const PlayersPage: React.FC = () => {
   });
 
   return (
+    <>
+    <SEO
+      title="Players | BidSport"
+      description="Manage your auction players with BidSport."
+      noIndex={true}
+    />
     <div className="h-full flex flex-col overflow-hidden">
       {/* Ultra-Compact Premium Header */}
       <div className="relative flex-shrink-0 border-b px-2 sm:px-4 py-1.5 sm:py-2 overflow-hidden" style={{
@@ -664,6 +671,7 @@ const PlayersPage: React.FC = () => {
         onCancel={() => setDeleteConfirmId(null)}
       />
     </div>
+    </>
   );
 };
 

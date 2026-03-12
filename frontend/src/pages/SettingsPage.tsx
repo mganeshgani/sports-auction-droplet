@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useDisplaySettings, MAX_SELECTABLE_ITEMS, getFieldIcon } from '../hooks/useDisplaySettings';
 import ConfirmModal from '../components/ConfirmModal';
+import SEO from '../components/SEO';
 
 interface AppConfig {
   branding: {
@@ -138,6 +139,12 @@ const SettingsPage: React.FC = () => {
   }
 
   return (
+    <>
+    <SEO
+      title="Settings | BidSport"
+      description="Configure your auction settings with BidSport."
+      noIndex={true}
+    />
     <div className="h-full overflow-y-auto p-3 sm:p-4">
       <div className="max-w-2xl mx-auto space-y-6">
 
@@ -531,6 +538,7 @@ const SettingsPage: React.FC = () => {
         onCancel={() => setShowResetConfirm(false)}
       />
     </div>
+    </>
   );
 };
 

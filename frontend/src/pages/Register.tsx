@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import SEO from '../components/SEO';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -60,6 +61,12 @@ const Register: React.FC = () => {
   };
 
   return (
+    <>
+    <SEO
+      title="Start Free Trial | BidSport — Sports Player Auction Software"
+      description="Create your free BidSport account. Conduct player auctions for cricket, football, kabaddi tournaments. Free for up to 2 teams. No credit card needed."
+      url="https://sportsauction.me/register"
+    />
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
       <div className="w-full max-w-md mt-4 sm:mt-8 mb-8">
         {/* Card Container */}
@@ -267,6 +274,7 @@ const Register: React.FC = () => {
         `}</style>
       </div>
     </div>
+    </>
   );
 };
 

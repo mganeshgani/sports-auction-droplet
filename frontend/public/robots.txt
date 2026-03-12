@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /player-registration/
+
+# Allow important pages
+Allow: /$
+Allow: /login
+Allow: /register
+
+# Sitemap location
+Sitemap: https://sportsauction.me/sitemap.xml
+
+# Crawl delay (be nice to crawlers)
+Crawl-delay: 1

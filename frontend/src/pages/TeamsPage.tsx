@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { teamService, clearCache, getStaleCached } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import ConfirmModal from '../components/ConfirmModal';
+import SEO from '../components/SEO';
 
 const TeamsPage: React.FC = () => {
   const { isAuctioneer, user } = useAuth();
@@ -136,6 +137,12 @@ const TeamsPage: React.FC = () => {
 
   // Statistics calculations
   return (
+    <>
+    <SEO
+      title="Teams | BidSport"
+      description="Manage your auction teams with BidSport."
+      noIndex={true}
+    />
     <div className="h-full flex flex-col overflow-hidden">
       {/* Ultra-Compact Premium Header */}
       <div className="flex-shrink-0" style={{
@@ -779,6 +786,7 @@ const TeamsPage: React.FC = () => {
         onCancel={() => setDeleteConfirmId(null)}
       />
     </div>
+    </>
   );
 };
 

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { playerService, teamService, clearCache, getStaleCached } from '../services/api';
 import { initializeSocket } from '../services/socket';
 import UnsoldPlayerCard from '../components/unsold/UnsoldPlayerCard';
+import SEO from '../components/SEO';
 
 const CELEBRATION_THROTTLE_MS = 3000;
 
@@ -179,6 +180,12 @@ const UnsoldPage: React.FC = () => {
   }, [selectedPlayer, selectedTeam, soldAmount, fetchUnsoldPlayers, fetchTeams]);
 
   return (
+    <>
+    <SEO
+      title="Unsold Players | BidSport"
+      description="Manage unsold players with BidSport."
+      noIndex={true}
+    />
     <div className="h-full flex flex-col overflow-hidden">
       {/* Ultra-Compact Premium Header */}
       <div className="flex-shrink-0 border-b px-2 sm:px-4 py-1.5 sm:py-2" style={{
@@ -440,6 +447,7 @@ const UnsoldPage: React.FC = () => {
         }
       `}</style>
     </div>
+    </>
   );
 };
 

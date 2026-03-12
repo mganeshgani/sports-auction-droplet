@@ -1,32 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Sports Auction Web Application - Live player bidding system"
-    />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2">
-<link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-<link rel="manifest" href="/site.webmanifest">
-    <title>Auction house</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+  <!-- PRIMARY SEO META TAGS -->
+  <title>Sports Auction Software | Online Player Auction Platform | BidSport</title>
+  <meta name="title" content="Sports Auction Software | Online Player Auction Platform | BidSport" />
+  <meta name="description" content="India's best online player auction software for cricket, football, kabaddi & volleyball tournaments. Conduct live IPL-style auctions with real-time bidding, custom player registration forms, team management and instant results. Free trial available." />
+  <meta name="keywords" content="sports auction software, player auction software, cricket auction software, online player auction, IPL style auction, cricket team auction, football player auction, kabaddi auction, tournament auction software, live player auction India, player bidding software, sports team auction online, auction software for cricket tournament, player auction platform India" />
+  <meta name="author" content="BidSport" />
+  <meta name="robots" content="index, follow" />
+  <meta name="language" content="English" />
+  <meta name="revisit-after" content="7 days" />
+  <meta name="category" content="Sports Software" />
+  <link rel="canonical" href="https://sportsauction.me" />
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+  <!-- OPEN GRAPH / FACEBOOK -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://sportsauction.me/" />
+  <meta property="og:title" content="Sports Auction Software | Online Player Auction Platform" />
+  <meta property="og:description" content="India's best online player auction software. Conduct live IPL-style auctions for cricket, football, kabaddi tournaments. Real-time bidding, custom forms, instant results. Free trial!" />
+  <meta property="og:image" content="https://sportsauction.me/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="BidSport - Sports Auction Software" />
+  <meta property="og:site_name" content="BidSport" />
+  <meta property="og:locale" content="en_IN" />
+
+  <!-- TWITTER CARD -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://sportsauction.me/" />
+  <meta name="twitter:title" content="Sports Auction Software | BidSport" />
+  <meta name="twitter:description" content="Conduct live IPL-style player auctions for any sport. Real-time bidding, custom registration forms, instant results. Free trial!" />
+  <meta name="twitter:image" content="https://sportsauction.me/og-image.png" />
+
+  <!-- GEO TARGETING — INDIA -->
+  <meta name="geo.region" content="IN" />
+  <meta name="geo.country" content="India" />
+  <meta name="geo.placename" content="India" />
+  <meta name="ICBM" content="20.5937, 78.9629" />
+
+  <!-- FAVICON & APP ICONS -->
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <meta name="theme-color" content="#080C14" />
+  <meta name="msapplication-TileColor" content="#080C14" />
+
+  <!-- PRECONNECT — SPEED UP EXTERNAL RESOURCES -->
+  <link rel="preconnect" href="https://api.sportsauction.me" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- STRUCTURED DATA — JSON-LD SCHEMA -->
+
+  <!-- Organization Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "BidSport",
+    "url": "https://sportsauction.me",
+    "logo": "https://sportsauction.me/logo.png",
+    "description": "India's best online sports player auction software for cricket, football, kabaddi and volleyball tournaments",
+    "foundingDate": "2024",
+    "areaServed": "IN",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer support",
+      "availableLanguage": ["English", "Hindi"]
+    },
+    "sameAs": []
+  }
+  </script>
+
+  <!-- SoftwareApplication Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "BidSport — Sports Auction Software",
+    "url": "https://sportsauction.me",
+    "applicationCategory": "SportsApplication",
+    "applicationSubCategory": "Auction Software",
+    "operatingSystem": "Web Browser",
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Free Trial",
+        "price": "0",
+        "priceCurrency": "INR",
+        "description": "Free auction for up to 2 teams and 20 players"
+      },
+      {
+        "@type": "Offer",
+        "name": "Starter Plan",
+        "price": "999",
+        "priceCurrency": "INR",
+        "description": "Up to 8 teams, 100 players, 30 days access"
+      },
+      {
+        "@type": "Offer",
+        "name": "Pro Plan",
+        "price": "2499",
+        "priceCurrency": "INR",
+        "description": "Up to 20 teams, 500 players, custom branding, 60 days access"
+      },
+      {
+        "@type": "Offer",
+        "name": "Unlimited Plan",
+        "price": "4999",
+        "priceCurrency": "INR",
+        "description": "Unlimited teams and players, multiple auctions, 90 days access"
+      }
+    ],
+    "description": "Online player auction software for sports tournaments. Conduct live IPL-style auctions for cricket, football, kabaddi, volleyball. Real-time bidding, custom player registration forms, team management.",
+    "featureList": [
+      "Real-time live bidding",
+      "Custom player registration form builder",
+      "Player photo uploads",
+      "Team budget management",
+      "Live auction display screen",
+      "Instant results and reports",
+      "Works on mobile and desktop",
+      "Cricket, Football, Kabaddi, Volleyball support"
+    ],
+    "screenshot": "https://sportsauction.me/og-image.png"
+  }
+  </script>
+
+  <!-- FAQ Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is sports auction software?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sports auction software is an online platform that allows tournament organizers to conduct live player auctions. Teams bid for players in real-time, like the IPL auction. BidSport supports cricket, football, kabaddi, volleyball and any other sport."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does player auction software cost in India?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "BidSport offers a free trial for up to 2 teams. Paid plans start at ₹999 per auction for up to 8 teams, ₹2,499 for up to 20 teams, and ₹4,999 for unlimited teams. This is the most affordable premium auction software in India."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I conduct a cricket auction online for free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! BidSport offers a completely free plan for auctions with up to 2 teams and 20 players. No credit card required. Sign up at sportsauction.me and start your free auction in minutes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work for football and kabaddi player auctions?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, BidSport works for any sport — cricket, football, kabaddi, volleyball, basketball, hockey, and more. The platform is completely customizable for any sport."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How many players and teams can I add?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The free trial supports 2 teams and 20 players. The Starter plan supports 8 teams and 100 players. The Pro plan supports 20 teams and 500 players. The Unlimited plan supports unlimited teams and players."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can players register themselves online?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! You get a unique registration link to share with players. They fill in their details and upload their photo themselves. You don't have to enter data manually for each player."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- WebSite Schema with SearchAction -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "BidSport",
+    "url": "https://sportsauction.me",
+    "description": "Online sports player auction software for Indian tournaments",
+    "inLanguage": "en-IN",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://sportsauction.me/search?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+</head>
+<body>
+  <noscript>
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px;">
+      <h1>BidSport — Online Sports Player Auction Software</h1>
+      <p>India's best online player auction platform for cricket, football, kabaddi and volleyball tournaments. Conduct live IPL-style auctions with real-time bidding.</p>
+      <h2>Features</h2>
+      <ul>
+        <li>Real-time live player auction</li>
+        <li>Custom player registration form builder</li>
+        <li>Team budget management</li>
+        <li>Works for cricket, football, kabaddi, volleyball</li>
+        <li>Player photo uploads</li>
+        <li>Instant results and reports</li>
+      </ul>
+      <h2>Pricing</h2>
+      <ul>
+        <li>Free — Up to 2 teams</li>
+        <li>Starter — ₹999 per auction (8 teams)</li>
+        <li>Pro — ₹2,499 per auction (20 teams)</li>
+        <li>Unlimited — ₹4,999 per auction</li>
+      </ul>
+      <p>Visit <a href="https://sportsauction.me">sportsauction.me</a> to start your free trial.</p>
+    </div>
+  </noscript>
+  <div id="root"></div>
+</body>
 </html>

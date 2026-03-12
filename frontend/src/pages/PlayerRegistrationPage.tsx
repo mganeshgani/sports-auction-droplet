@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 interface FormField {
   fieldName: string;
@@ -295,6 +296,12 @@ const PlayerRegistrationPage: React.FC = () => {
   }
 
   return (
+    <>
+    <SEO
+      title="Player Registration | Sports Auction"
+      description="Register as a player for the upcoming sports auction tournament."
+      noIndex={true}
+    />
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-start justify-center p-2 sm:p-3 lg:p-4">
       <div className="w-full max-w-2xl my-2">
         <div className="relative">
@@ -736,6 +743,7 @@ const PlayerRegistrationPage: React.FC = () => {
         }
       `}</style>
     </div>
+    </>
   );
 };
 

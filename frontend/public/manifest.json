@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "BidSport",
+  "name": "BidSport — Sports Auction Software",
+  "description": "Online player auction software for cricket, football, kabaddi tournaments in India",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,9 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#080C14",
+  "background_color": "#080C14",
+  "orientation": "portrait-primary",
+  "lang": "en-IN",
+  "categories": ["sports", "utilities", "productivity"]
 }

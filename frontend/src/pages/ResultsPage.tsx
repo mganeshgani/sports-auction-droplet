@@ -8,6 +8,7 @@ import { resultsService, clearCache, getStaleCached } from '../services/api';
 import TeamCard from '../components/results/TeamCard';
 import { useDisplaySettings } from '../hooks/useDisplaySettings';
 import { formatCurrency } from '../utils/formatters';
+import SEO from '../components/SEO';
 
 const ResultsPage: React.FC = () => {
   const { isAuctioneer } = useAuth();
@@ -385,6 +386,12 @@ const ResultsPage: React.FC = () => {
   }, [players, teams]);
 
   return (
+    <>
+    <SEO
+      title="Results | BidSport"
+      description="View auction results with BidSport."
+      noIndex={true}
+    />
     <div className="h-full flex flex-col overflow-hidden" style={{
       background: 'linear-gradient(160deg, #000000 0%, #0a0a0a 25%, #1a1a1a 50%, #0f172a 75%, #1a1a1a 100%)'
     }}>
@@ -606,7 +613,7 @@ const ResultsPage: React.FC = () => {
               {/* Background — team logo as blurred backdrop */}
               <div className="absolute inset-0 overflow-hidden">
                 {selectedTeam.logoUrl ? (
-                  <img src={selectedTeam.logoUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.07] scale-150 blur-2xl" />
+                  <img src={selectedTeam.logoUrl} alt={`${selectedTeam.name} background`} className="absolute inset-0 w-full h-full object-cover opacity-[0.07] scale-150 blur-2xl" />
                 ) : (
                   <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0f1923 0%, #0a0a0a 40%, #1a0f0a 100%)' }} />
                 )}
@@ -1620,6 +1627,7 @@ const ResultsPage: React.FC = () => {
         }
       `}</style>
     </div>
+    </>
   );
 };
 

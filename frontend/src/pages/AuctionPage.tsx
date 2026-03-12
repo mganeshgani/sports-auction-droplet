@@ -10,6 +10,7 @@ import { initializeSocket } from '../services/socket';
 import { useDisplaySettings } from '../hooks/useDisplaySettings';
 import { toast } from 'react-toastify';
 import '../maisonCelebration.css';
+import SEO from '../components/SEO';
 
 const AuctionPage: React.FC = () => {
   const { isAuctioneer } = useAuth();
@@ -257,6 +258,11 @@ const AuctionPage: React.FC = () => {
 
   return (
     <>
+      <SEO
+        title="Auction | BidSport"
+        description="Manage your auction with BidSport."
+        noIndex={true}
+      />
       <div className="h-full flex flex-col px-2 sm:px-4 py-2 sm:py-3 overflow-hidden" style={{
         background: 'linear-gradient(160deg, #000000 0%, #0a0a0a 25%, #1a1a1a 50%, #0f172a 75%, #1a1a1a 100%)',
         backgroundAttachment: 'fixed'

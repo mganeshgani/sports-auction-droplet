@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { adminService, getStaleCached } from '../services/api';
+import SEO from '../components/SEO';
 
 interface DashboardStats {
   totalAuctioneers: number;
@@ -100,6 +101,12 @@ const AdminDashboard: React.FC = () => {
   ];
 
   return (
+    <>
+    <SEO
+      title="Dashboard | BidSport"
+      description="Manage your sports auction from the BidSport dashboard."
+      noIndex={true}
+    />
     <div className="space-y-6 pb-8">
       {/* Welcome Header */}
       <div>
@@ -226,6 +233,7 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

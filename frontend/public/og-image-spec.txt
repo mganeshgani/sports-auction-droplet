@@ -1,0 +1,15 @@
+OG Image Specification for sportsauction.me
+Size: 1200 x 630 pixels
+Background: Dark #080C14
+Left side: Logo + "BidSport" in gold
+Center: "Online Sports Auction Platform" in white bold text
+Sub-text: "Cricket • Football • Kabaddi • Volleyball" in gold
+Right side: Screenshot or illustration of the auction screen
+Bottom bar: "sportsauction.me" in small text
+
+Tools to create this:
+- Canva (free): Use "Custom size 1200x630"
+- Figma (free)
+- Adobe Express (free)
+
+Save as og-image.png in the public/ folder

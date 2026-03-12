@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
+import SEO from '../components/SEO';
 import {
   DndContext,
   closestCenter,
@@ -753,6 +754,12 @@ const FormBuilderPage: React.FC = () => {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
+    <>
+    <SEO
+      title="Form Builder | BidSport"
+      description="Build custom player registration forms with BidSport."
+      noIndex={true}
+    />
     <div className="h-full flex flex-col bg-slate-950 overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm px-3 sm:px-5 py-1.5 sm:py-2">
@@ -1048,6 +1055,7 @@ const FormBuilderPage: React.FC = () => {
         onCancel={() => setPendingTemplate(null)}
       />
     </div>
+    </>
   );
 };
 
